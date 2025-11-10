@@ -74,9 +74,19 @@ ASTNode* crear_nodo_postfix(ASTNode* hijo, char* op, int linea) {
     return nodo;
 }
 
+ASTNode* crear_nodo_funcion_reservada(char* nombre, int linea) {
+    ASTNode* nodo = crear_nodo(NODO_FUNCION_RESERVADA, linea);
+    /* Asignamos el string literal estático. No necesitamos strdup() */
+    nodo->data.cadena = nombre; 
+    return nodo;
+}
+
 /* Enlaza dos nodos en una lista usando el campo 'siguiente' */
 ASTNode* enlazar_nodos(ASTNode* lista, ASTNode* item) {
-    if (!lista) return item;
+    if (!lista || lista->tipo == NODO_VACIO) {
+        /* Si la lista es nula o vacía, el item es la nueva lista */
+        return item;
+    }
     ASTNode* actual = lista;
     while (actual->siguiente) {
         actual = actual->siguiente;
@@ -147,6 +157,7 @@ void imprimir_arbol(ASTNode* nodo, int nivel) {
         case NODO_WHILE: printf("While\n"); break;
         case NODO_DO_WHILE: printf("DoWhile\n"); break;
         case NODO_LLAMADA_FUNCION: printf("LlamadaFuncion\n"); break;
+        case NODO_FUNCION_RESERVADA: printf("FuncReservada: %s\n", nodo->data.cadena); break;
         case NODO_BINARIO_OP: printf("OpBinario (%s)\n", nodo->data.op_unario); break;
         case NODO_UNARIO_OP: printf("OpUnario (%s)\n", nodo->data.op_unario); break;
         case NODO_POSTFIX_OP: printf("OpPostfix (%s)\n", nodo->data.op_unario); break;
@@ -168,7 +179,7 @@ void imprimir_arbol(ASTNode* nodo, int nivel) {
     if (nodo->hijo4) imprimir_arbol(nodo->hijo4, nivel + 1);
     
     // Recorrer listas
-    if (nodo->siguiente) {
+    if (nodo->siguiente && nodo->siguiente->tipo != NODO_VACIO) {
         for (int i = 0; i < nivel - 1; i++) printf("  "); // Indentación de lista
         printf("  (siguiente) ->\n");
         imprimir_arbol(nodo->siguiente, nivel);

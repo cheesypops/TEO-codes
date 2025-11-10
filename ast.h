@@ -16,15 +16,16 @@ typedef enum {
     NODO_LISTA_INSTRUCCIONES,
 
     /* Nodos de Instrucciones */
-    NODO_ASIGNACION,
     NODO_DECLARACION,
     NODO_IF,
     NODO_FOR,
     NODO_WHILE,
     NODO_DO_WHILE,
     NODO_LLAMADA_FUNCION, // Se usa en ExpPostfix
+    NODO_FUNCION_RESERVADA,
 
     /* Nodos de Expresión (Operadores) */
+    NODO_ASIGNACION,
     NODO_BINARIO_OP, // Para +, -, *, /, %, &&, ||, ==, !=, <, <=, >, >=
     NODO_UNARIO_OP,  // Para !, -, +, ++, -- (prefijo)
     NODO_POSTFIX_OP, // Para ++, -- (postfijo)
@@ -86,12 +87,14 @@ ASTNode* crear_nodo_tipo(TipoDato tipo, int linea);
 ASTNode* crear_nodo_unario(char* op, ASTNode* hijo, int linea);
 ASTNode* crear_nodo_binario(char* op, ASTNode* izq, ASTNode* der, int linea);
 ASTNode* crear_nodo_postfix(ASTNode* hijo, char* op, int linea);
+ASTNode* crear_nodo_funcion_reservada(char* nombre, int linea);
 
 /* Funciones para enlazar listas */
 ASTNode* enlazar_instruccion(ASTNode* lista, ASTNode* instruccion);
 ASTNode* enlazar_parametro(ASTNode* lista, ASTNode* parametro);
 ASTNode* enlazar_argumento(ASTNode* lista, ASTNode* argumento);
 ASTNode* enlazar_declaracion(ASTNode* lista, ASTNode* declaracion_init);
+ASTNode* enlazar_nodos(ASTNode* lista, ASTNode* item);  
 
 /* Funciones del Árbol */
 void liberar_arbol(ASTNode* nodo);

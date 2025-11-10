@@ -28,7 +28,7 @@ $(TARGET): $(OBJECTS)
 # Regla para generar el parser (de .y a .c y .h)
 # -d: genera el archivo .h (parser.tab.h)
 parser.tab.c parser.tab.h: parser.y ast.h
-	$(BISON) -d parser.y
+	$(BISON) -d -Wcounterexamples --report=all parser.y
 
 # Regla para generar el lexer (de .l a .c)
 lexer.yy.c: lexer.l parser.tab.h

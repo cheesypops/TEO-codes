@@ -3,17 +3,20 @@
 
 #include "ast.h"
 
-/* Estructura para un símbolo en la Tabla de Símbolos */
-typedef struct {
+typedef struct Simbolo {
     char* nombre;
     TipoDato tipo;
     int ambito;
     int linea;
-    // ... aquí iría más info (ej. lista de parámetros si es función)
+    
+    /* --- NUEVO CAMPO --- */
+    /* Guarda el puntero al AST de la lista de parámetros (NODO_DECLARACION) */
+    struct ASTNode* parametros; 
+    
 } Simbolo;
 
 
 /* Función principal del analizador */
 int analizar_semantica(ASTNode* raiz);
 
-#endif // SEMANTIC_H    
+#endif // SEMANTIC_H

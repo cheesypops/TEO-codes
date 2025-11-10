@@ -1,0 +1,3587 @@
+Grammar
+
+    0 $accept: Programa $end
+
+    1 Programa: DeclaracionGlobal SetupDef FuncionDef
+
+    2 DeclaracionGlobal: ε
+    3                  | DeclaracionGlobal Declaracion PUNTOYCOMA_TOKEN
+    4                  | DeclaracionGlobal Expresion PUNTOYCOMA_TOKEN
+
+    5 SetupDef: VOID_TOKEN SETUP_TOKEN PAREN_IZQ_TOKEN PAREN_DER_TOKEN Bloque
+
+    6 Bloque: INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+
+    7 ListaInstrucciones: ε
+    8                   | ListaInstrucciones Instruccion
+
+    9 Instruccion: Declaracion PUNTOYCOMA_TOKEN
+   10            | Expresion PUNTOYCOMA_TOKEN
+   11            | If
+   12            | For
+   13            | While
+   14            | DoWhile
+   15            | Bloque
+
+   16 Declaracion: Tipo ListaDeclaradores
+
+   17 ListaDeclaradores: Declarador
+   18                  | ListaDeclaradores COMA_TOKEN Declarador
+
+   19 Declarador: ID_TOKEN DeclaracionInit
+
+   20 DeclaracionInit: ASIGN_TOKEN Expresion
+   21                | ε
+
+   22 If: IF_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque IfPrima
+
+   23 IfPrima: ELSE_TOKEN Bloque
+   24        | ε
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+
+   26 ForInit: Declaracion
+   27        | Expresion
+   28        | ε
+
+   29 ExpresionLogicaFor: Expresion
+   30                   | ε
+
+   31 ForStep: Expresion
+   32        | ε
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+   34 While: WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque
+
+   35 FuncionDef: TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
+
+   36 ListaParametros: ε
+   37                | ListaParametrosCont
+
+   38 ListaParametrosCont: Parametro
+   39                    | ListaParametrosCont COMA_TOKEN Parametro
+
+   40 Parametro: Tipo ID_TOKEN
+
+   41 TipoRetorno: VOID_TOKEN
+   42            | Tipo
+
+   43 Tipo: TIPO_TOKEN_INT
+   44     | TIPO_TOKEN_BOOLEAN
+   45     | TIPO_TOKEN_FLOAT
+   46     | TIPO_TOKEN_CHAR
+   47     | TIPO_TOKEN_STRING
+
+   48 ListaArgumentos: ε
+   49                | ListaArgumentosCont
+
+   50 ListaArgumentosCont: Expresion
+   51                    | ListaArgumentosCont COMA_TOKEN Expresion
+
+   52 Expresion: ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | ExpLogicaOr
+
+   54 ExpLogicaOr: ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | ExpLogicaAnd
+
+   56 ExpLogicaAnd: ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | ExpComparacion
+
+   58 ExpComparacion: ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | ExpAditiva
+
+   65 ExpAditiva: ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | ExpMultiplicativa
+
+   68 ExpMultiplicativa: ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | ExpUnaria
+
+   72 ExpUnaria: NOT_TOKEN ExpUnaria
+   73          | MENOS_TOKEN ExpUnaria
+   74          | MAS_TOKEN ExpUnaria
+   75          | INC_TOKEN ExpUnaria
+   76          | DEC_TOKEN ExpUnaria
+   77          | ExpPostfija
+
+   78 ExpPostfija: ExpPrimaria
+   79            | ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | ExpPostfija INC_TOKEN
+   82            | ExpPostfija DEC_TOKEN
+
+   83 ExpPrimaria: ID_TOKEN
+   84            | NUMERO_TOKEN
+   85            | CADENA_TOKEN
+   86            | TRUE_TOKEN
+   87            | FALSE_TOKEN
+   88            | PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | MOVER_TOKEN
+   90            | GIRARIZQ_TOKEN
+   91            | GIRARDER_TOKEN
+   92            | LEERSENSOR_TOKEN
+   93            | PARAR_TOKEN
+   94            | REVERSA_TOKEN
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256)
+    ID_TOKEN <cadena> (258) 19 35 40 83
+    NUMERO_TOKEN <numero> (259) 84
+    CADENA_TOKEN <cadena> (260) 85
+    TRUE_TOKEN <booleano> (261) 86
+    FALSE_TOKEN <booleano> (262) 87
+    TIPO_TOKEN_INT (263) 43
+    TIPO_TOKEN_BOOLEAN (264) 44
+    TIPO_TOKEN_FLOAT (265) 45
+    TIPO_TOKEN_CHAR (266) 46
+    TIPO_TOKEN_STRING (267) 47
+    IF_TOKEN (268) 22
+    ELSE_TOKEN (269) 23
+    FOR_TOKEN (270) 25
+    WHILE_TOKEN (271) 33 34
+    DO_TOKEN (272) 33
+    VOID_TOKEN (273) 5 41
+    SETUP_TOKEN (274) 5
+    MOVER_TOKEN (275) 89
+    GIRARIZQ_TOKEN (276) 90
+    GIRARDER_TOKEN (277) 91
+    LEERSENSOR_TOKEN (278) 92
+    PARAR_TOKEN (279) 93
+    REVERSA_TOKEN (280) 94
+    INICIO_TOKEN (281) 6 33
+    FIN_TOKEN (282) 6 33
+    PAREN_IZQ_TOKEN (283) 5 22 25 33 34 35 79 88
+    PAREN_DER_TOKEN (284) 5 22 25 33 34 35 79 88
+    CORCH_IZQ_TOKEN (285) 80
+    CORCH_DER_TOKEN (286) 80
+    PUNTOYCOMA_TOKEN (287) 3 4 9 10 25 33
+    COMA_TOKEN (288) 18 39 51
+    ASIGN_TOKEN (289) 20 52
+    OR_TOKEN (290) 54
+    AND_TOKEN (291) 56
+    IGUAL_TOKEN (292) 58
+    NO_IGUAL_TOKEN (293) 59
+    MENOR_TOKEN (294) 60
+    MENOR_IGUAL_TOKEN (295) 61
+    MAYOR_TOKEN (296) 62
+    MAYOR_IGUAL_TOKEN (297) 63
+    MAS_TOKEN (298) 65 74
+    MENOS_TOKEN (299) 66 73
+    MULT_TOKEN (300) 68
+    DIV_TOKEN (301) 69
+    MOD_TOKEN (302) 70
+    NOT_TOKEN (303) 72
+    INC_TOKEN (304) 75 81
+    DEC_TOKEN (305) 76 82
+
+
+Nonterminals, with rules where they appear
+
+    $accept (51)
+        on left: 0
+    Programa <nodo> (52)
+        on left: 1
+        on right: 0
+    DeclaracionGlobal <nodo> (53)
+        on left: 2 3 4
+        on right: 1 3 4
+    SetupDef <nodo> (54)
+        on left: 5
+        on right: 1
+    Bloque <nodo> (55)
+        on left: 6
+        on right: 5 15 22 23 25 33 34 35
+    ListaInstrucciones <nodo> (56)
+        on left: 7 8
+        on right: 6 8
+    Instruccion <nodo> (57)
+        on left: 9 10 11 12 13 14 15
+        on right: 8
+    Declaracion <nodo> (58)
+        on left: 16
+        on right: 3 9 26
+    ListaDeclaradores <nodo> (59)
+        on left: 17 18
+        on right: 16 18
+    Declarador <nodo> (60)
+        on left: 19
+        on right: 17 18
+    DeclaracionInit <nodo> (61)
+        on left: 20 21
+        on right: 19
+    If <nodo> (62)
+        on left: 22
+        on right: 11
+    IfPrima <nodo> (63)
+        on left: 23 24
+        on right: 22
+    For <nodo> (64)
+        on left: 25
+        on right: 12
+    ForInit <nodo> (65)
+        on left: 26 27 28
+        on right: 25
+    ExpresionLogicaFor <nodo> (66)
+        on left: 29 30
+        on right: 25
+    ForStep <nodo> (67)
+        on left: 31 32
+        on right: 25
+    DoWhile <nodo> (68)
+        on left: 33
+        on right: 14
+    While <nodo> (69)
+        on left: 34
+        on right: 13
+    FuncionDef <nodo> (70)
+        on left: 35
+        on right: 1
+    ListaParametros <nodo> (71)
+        on left: 36 37
+        on right: 35
+    ListaParametrosCont <nodo> (72)
+        on left: 38 39
+        on right: 37 39
+    Parametro <nodo> (73)
+        on left: 40
+        on right: 38 39
+    TipoRetorno <nodo> (74)
+        on left: 41 42
+        on right: 35
+    Tipo <tipo_dato> (75)
+        on left: 43 44 45 46 47
+        on right: 16 40 42
+    ListaArgumentos <nodo> (76)
+        on left: 48 49
+        on right: 79
+    ListaArgumentosCont <nodo> (77)
+        on left: 50 51
+        on right: 49 51
+    Expresion <nodo> (78)
+        on left: 52 53
+        on right: 4 10 20 22 27 29 31 33 34 50 51 52 80 88
+    ExpLogicaOr <nodo> (79)
+        on left: 54 55
+        on right: 52 53 54
+    ExpLogicaAnd <nodo> (80)
+        on left: 56 57
+        on right: 54 55 56
+    ExpComparacion <nodo> (81)
+        on left: 58 59 60 61 62 63 64
+        on right: 56 57 58 59 60 61 62 63
+    ExpAditiva <nodo> (82)
+        on left: 65 66 67
+        on right: 58 59 60 61 62 63 64 65 66
+    ExpMultiplicativa <nodo> (83)
+        on left: 68 69 70 71
+        on right: 65 66 67 68 69 70
+    ExpUnaria <nodo> (84)
+        on left: 72 73 74 75 76 77
+        on right: 68 69 70 71 72 73 74 75 76
+    ExpPostfija <nodo> (85)
+        on left: 78 79 80 81 82
+        on right: 77 79 80 81 82
+    ExpPrimaria <nodo> (86)
+        on left: 83 84 85 86 87 88 89 90 91 92 93 94
+        on right: 78
+
+
+State 0
+
+    0 $accept: • Programa $end
+    1 Programa: • DeclaracionGlobal SetupDef FuncionDef
+    2 DeclaracionGlobal: ε •
+    3                  | • DeclaracionGlobal Declaracion PUNTOYCOMA_TOKEN
+    4                  | • DeclaracionGlobal Expresion PUNTOYCOMA_TOKEN
+
+    $default  reduce using rule 2 (DeclaracionGlobal)
+
+    Programa           go to state 1
+    DeclaracionGlobal  go to state 2
+
+
+State 1
+
+    0 $accept: Programa • $end
+
+    $end  shift, and go to state 3
+
+
+State 2
+
+    1 Programa: DeclaracionGlobal • SetupDef FuncionDef
+    3 DeclaracionGlobal: DeclaracionGlobal • Declaracion PUNTOYCOMA_TOKEN
+    4                  | DeclaracionGlobal • Expresion PUNTOYCOMA_TOKEN
+    5 SetupDef: • VOID_TOKEN SETUP_TOKEN PAREN_IZQ_TOKEN PAREN_DER_TOKEN Bloque
+   16 Declaracion: • Tipo ListaDeclaradores
+   43 Tipo: • TIPO_TOKEN_INT
+   44     | • TIPO_TOKEN_BOOLEAN
+   45     | • TIPO_TOKEN_FLOAT
+   46     | • TIPO_TOKEN_CHAR
+   47     | • TIPO_TOKEN_STRING
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN            shift, and go to state 4
+    NUMERO_TOKEN        shift, and go to state 5
+    CADENA_TOKEN        shift, and go to state 6
+    TRUE_TOKEN          shift, and go to state 7
+    FALSE_TOKEN         shift, and go to state 8
+    TIPO_TOKEN_INT      shift, and go to state 9
+    TIPO_TOKEN_BOOLEAN  shift, and go to state 10
+    TIPO_TOKEN_FLOAT    shift, and go to state 11
+    TIPO_TOKEN_CHAR     shift, and go to state 12
+    TIPO_TOKEN_STRING   shift, and go to state 13
+    VOID_TOKEN          shift, and go to state 14
+    MOVER_TOKEN         shift, and go to state 15
+    GIRARIZQ_TOKEN      shift, and go to state 16
+    GIRARDER_TOKEN      shift, and go to state 17
+    LEERSENSOR_TOKEN    shift, and go to state 18
+    PARAR_TOKEN         shift, and go to state 19
+    REVERSA_TOKEN       shift, and go to state 20
+    PAREN_IZQ_TOKEN     shift, and go to state 21
+    MAS_TOKEN           shift, and go to state 22
+    MENOS_TOKEN         shift, and go to state 23
+    NOT_TOKEN           shift, and go to state 24
+    INC_TOKEN           shift, and go to state 25
+    DEC_TOKEN           shift, and go to state 26
+
+    SetupDef           go to state 27
+    Declaracion        go to state 28
+    Tipo               go to state 29
+    Expresion          go to state 30
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 3
+
+    0 $accept: Programa $end •
+
+    $default  accept
+
+
+State 4
+
+   83 ExpPrimaria: ID_TOKEN •
+
+    $default  reduce using rule 83 (ExpPrimaria)
+
+
+State 5
+
+   84 ExpPrimaria: NUMERO_TOKEN •
+
+    $default  reduce using rule 84 (ExpPrimaria)
+
+
+State 6
+
+   85 ExpPrimaria: CADENA_TOKEN •
+
+    $default  reduce using rule 85 (ExpPrimaria)
+
+
+State 7
+
+   86 ExpPrimaria: TRUE_TOKEN •
+
+    $default  reduce using rule 86 (ExpPrimaria)
+
+
+State 8
+
+   87 ExpPrimaria: FALSE_TOKEN •
+
+    $default  reduce using rule 87 (ExpPrimaria)
+
+
+State 9
+
+   43 Tipo: TIPO_TOKEN_INT •
+
+    $default  reduce using rule 43 (Tipo)
+
+
+State 10
+
+   44 Tipo: TIPO_TOKEN_BOOLEAN •
+
+    $default  reduce using rule 44 (Tipo)
+
+
+State 11
+
+   45 Tipo: TIPO_TOKEN_FLOAT •
+
+    $default  reduce using rule 45 (Tipo)
+
+
+State 12
+
+   46 Tipo: TIPO_TOKEN_CHAR •
+
+    $default  reduce using rule 46 (Tipo)
+
+
+State 13
+
+   47 Tipo: TIPO_TOKEN_STRING •
+
+    $default  reduce using rule 47 (Tipo)
+
+
+State 14
+
+    5 SetupDef: VOID_TOKEN • SETUP_TOKEN PAREN_IZQ_TOKEN PAREN_DER_TOKEN Bloque
+
+    SETUP_TOKEN  shift, and go to state 39
+
+
+State 15
+
+   89 ExpPrimaria: MOVER_TOKEN •
+
+    $default  reduce using rule 89 (ExpPrimaria)
+
+
+State 16
+
+   90 ExpPrimaria: GIRARIZQ_TOKEN •
+
+    $default  reduce using rule 90 (ExpPrimaria)
+
+
+State 17
+
+   91 ExpPrimaria: GIRARDER_TOKEN •
+
+    $default  reduce using rule 91 (ExpPrimaria)
+
+
+State 18
+
+   92 ExpPrimaria: LEERSENSOR_TOKEN •
+
+    $default  reduce using rule 92 (ExpPrimaria)
+
+
+State 19
+
+   93 ExpPrimaria: PARAR_TOKEN •
+
+    $default  reduce using rule 93 (ExpPrimaria)
+
+
+State 20
+
+   94 ExpPrimaria: REVERSA_TOKEN •
+
+    $default  reduce using rule 94 (ExpPrimaria)
+
+
+State 21
+
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   88            | PAREN_IZQ_TOKEN • Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 40
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 22
+
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   74          | MAS_TOKEN • ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 41
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 23
+
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   73          | MENOS_TOKEN • ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 42
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 24
+
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   72          | NOT_TOKEN • ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 43
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 25
+
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   75          | INC_TOKEN • ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 44
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 26
+
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   76          | DEC_TOKEN • ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 45
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 27
+
+    1 Programa: DeclaracionGlobal SetupDef • FuncionDef
+   35 FuncionDef: • TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
+   41 TipoRetorno: • VOID_TOKEN
+   42            | • Tipo
+   43 Tipo: • TIPO_TOKEN_INT
+   44     | • TIPO_TOKEN_BOOLEAN
+   45     | • TIPO_TOKEN_FLOAT
+   46     | • TIPO_TOKEN_CHAR
+   47     | • TIPO_TOKEN_STRING
+
+    TIPO_TOKEN_INT      shift, and go to state 9
+    TIPO_TOKEN_BOOLEAN  shift, and go to state 10
+    TIPO_TOKEN_FLOAT    shift, and go to state 11
+    TIPO_TOKEN_CHAR     shift, and go to state 12
+    TIPO_TOKEN_STRING   shift, and go to state 13
+    VOID_TOKEN          shift, and go to state 46
+
+    FuncionDef   go to state 47
+    TipoRetorno  go to state 48
+    Tipo         go to state 49
+
+
+State 28
+
+    3 DeclaracionGlobal: DeclaracionGlobal Declaracion • PUNTOYCOMA_TOKEN
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 50
+
+
+State 29
+
+   16 Declaracion: Tipo • ListaDeclaradores
+   17 ListaDeclaradores: • Declarador
+   18                  | • ListaDeclaradores COMA_TOKEN Declarador
+   19 Declarador: • ID_TOKEN DeclaracionInit
+
+    ID_TOKEN  shift, and go to state 51
+
+    ListaDeclaradores  go to state 52
+    Declarador         go to state 53
+
+
+State 30
+
+    4 DeclaracionGlobal: DeclaracionGlobal Expresion • PUNTOYCOMA_TOKEN
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 54
+
+
+State 31
+
+   52 Expresion: ExpLogicaOr • ASIGN_TOKEN Expresion
+   53          | ExpLogicaOr •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN]
+   54 ExpLogicaOr: ExpLogicaOr • OR_TOKEN ExpLogicaAnd
+
+    ASIGN_TOKEN  shift, and go to state 55
+    OR_TOKEN     shift, and go to state 56
+
+    $default  reduce using rule 53 (Expresion)
+
+
+State 32
+
+   55 ExpLogicaOr: ExpLogicaAnd •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN]
+   56 ExpLogicaAnd: ExpLogicaAnd • AND_TOKEN ExpComparacion
+
+    AND_TOKEN  shift, and go to state 57
+
+    $default  reduce using rule 55 (ExpLogicaOr)
+
+
+State 33
+
+   57 ExpLogicaAnd: ExpComparacion •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN]
+   58 ExpComparacion: ExpComparacion • IGUAL_TOKEN ExpAditiva
+   59               | ExpComparacion • NO_IGUAL_TOKEN ExpAditiva
+   60               | ExpComparacion • MENOR_TOKEN ExpAditiva
+   61               | ExpComparacion • MENOR_IGUAL_TOKEN ExpAditiva
+   62               | ExpComparacion • MAYOR_TOKEN ExpAditiva
+   63               | ExpComparacion • MAYOR_IGUAL_TOKEN ExpAditiva
+
+    IGUAL_TOKEN        shift, and go to state 58
+    NO_IGUAL_TOKEN     shift, and go to state 59
+    MENOR_TOKEN        shift, and go to state 60
+    MENOR_IGUAL_TOKEN  shift, and go to state 61
+    MAYOR_TOKEN        shift, and go to state 62
+    MAYOR_IGUAL_TOKEN  shift, and go to state 63
+
+    $default  reduce using rule 57 (ExpLogicaAnd)
+
+
+State 34
+
+   64 ExpComparacion: ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 64 (ExpComparacion)
+
+
+State 35
+
+   67 ExpAditiva: ExpMultiplicativa •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN, MAS_TOKEN, MENOS_TOKEN]
+   68 ExpMultiplicativa: ExpMultiplicativa • MULT_TOKEN ExpUnaria
+   69                  | ExpMultiplicativa • DIV_TOKEN ExpUnaria
+   70                  | ExpMultiplicativa • MOD_TOKEN ExpUnaria
+
+    MULT_TOKEN  shift, and go to state 66
+    DIV_TOKEN   shift, and go to state 67
+    MOD_TOKEN   shift, and go to state 68
+
+    $default  reduce using rule 67 (ExpAditiva)
+
+
+State 36
+
+   71 ExpMultiplicativa: ExpUnaria •
+
+    $default  reduce using rule 71 (ExpMultiplicativa)
+
+
+State 37
+
+   77 ExpUnaria: ExpPostfija •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN, MAS_TOKEN, MENOS_TOKEN, MULT_TOKEN, DIV_TOKEN, MOD_TOKEN]
+   79 ExpPostfija: ExpPostfija • PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | ExpPostfija • CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | ExpPostfija • INC_TOKEN
+   82            | ExpPostfija • DEC_TOKEN
+
+    PAREN_IZQ_TOKEN  shift, and go to state 69
+    CORCH_IZQ_TOKEN  shift, and go to state 70
+    INC_TOKEN        shift, and go to state 71
+    DEC_TOKEN        shift, and go to state 72
+
+    $default  reduce using rule 77 (ExpUnaria)
+
+
+State 38
+
+   78 ExpPostfija: ExpPrimaria •
+
+    $default  reduce using rule 78 (ExpPostfija)
+
+
+State 39
+
+    5 SetupDef: VOID_TOKEN SETUP_TOKEN • PAREN_IZQ_TOKEN PAREN_DER_TOKEN Bloque
+
+    PAREN_IZQ_TOKEN  shift, and go to state 73
+
+
+State 40
+
+   88 ExpPrimaria: PAREN_IZQ_TOKEN Expresion • PAREN_DER_TOKEN
+
+    PAREN_DER_TOKEN  shift, and go to state 74
+
+
+State 41
+
+   74 ExpUnaria: MAS_TOKEN ExpUnaria •
+
+    $default  reduce using rule 74 (ExpUnaria)
+
+
+State 42
+
+   73 ExpUnaria: MENOS_TOKEN ExpUnaria •
+
+    $default  reduce using rule 73 (ExpUnaria)
+
+
+State 43
+
+   72 ExpUnaria: NOT_TOKEN ExpUnaria •
+
+    $default  reduce using rule 72 (ExpUnaria)
+
+
+State 44
+
+   75 ExpUnaria: INC_TOKEN ExpUnaria •
+
+    $default  reduce using rule 75 (ExpUnaria)
+
+
+State 45
+
+   76 ExpUnaria: DEC_TOKEN ExpUnaria •
+
+    $default  reduce using rule 76 (ExpUnaria)
+
+
+State 46
+
+   41 TipoRetorno: VOID_TOKEN •
+
+    $default  reduce using rule 41 (TipoRetorno)
+
+
+State 47
+
+    1 Programa: DeclaracionGlobal SetupDef FuncionDef •
+
+    $default  reduce using rule 1 (Programa)
+
+
+State 48
+
+   35 FuncionDef: TipoRetorno • ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
+
+    ID_TOKEN  shift, and go to state 75
+
+
+State 49
+
+   42 TipoRetorno: Tipo •
+
+    $default  reduce using rule 42 (TipoRetorno)
+
+
+State 50
+
+    3 DeclaracionGlobal: DeclaracionGlobal Declaracion PUNTOYCOMA_TOKEN •
+
+    $default  reduce using rule 3 (DeclaracionGlobal)
+
+
+State 51
+
+   19 Declarador: ID_TOKEN • DeclaracionInit
+   20 DeclaracionInit: • ASIGN_TOKEN Expresion
+   21                | ε •  [PUNTOYCOMA_TOKEN, COMA_TOKEN]
+
+    ASIGN_TOKEN  shift, and go to state 76
+
+    $default  reduce using rule 21 (DeclaracionInit)
+
+    DeclaracionInit  go to state 77
+
+
+State 52
+
+   16 Declaracion: Tipo ListaDeclaradores •  [PUNTOYCOMA_TOKEN]
+   18 ListaDeclaradores: ListaDeclaradores • COMA_TOKEN Declarador
+
+    COMA_TOKEN  shift, and go to state 78
+
+    $default  reduce using rule 16 (Declaracion)
+
+
+State 53
+
+   17 ListaDeclaradores: Declarador •
+
+    $default  reduce using rule 17 (ListaDeclaradores)
+
+
+State 54
+
+    4 DeclaracionGlobal: DeclaracionGlobal Expresion PUNTOYCOMA_TOKEN •
+
+    $default  reduce using rule 4 (DeclaracionGlobal)
+
+
+State 55
+
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   52          | ExpLogicaOr ASIGN_TOKEN • Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 79
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 56
+
+   54 ExpLogicaOr: ExpLogicaOr OR_TOKEN • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpLogicaAnd       go to state 80
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 57
+
+   56 ExpLogicaAnd: ExpLogicaAnd AND_TOKEN • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpComparacion     go to state 81
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 58
+
+   58 ExpComparacion: ExpComparacion IGUAL_TOKEN • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpAditiva         go to state 82
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 59
+
+   59 ExpComparacion: ExpComparacion NO_IGUAL_TOKEN • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpAditiva         go to state 83
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 60
+
+   60 ExpComparacion: ExpComparacion MENOR_TOKEN • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpAditiva         go to state 84
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 61
+
+   61 ExpComparacion: ExpComparacion MENOR_IGUAL_TOKEN • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpAditiva         go to state 85
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 62
+
+   62 ExpComparacion: ExpComparacion MAYOR_TOKEN • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpAditiva         go to state 86
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 63
+
+   63 ExpComparacion: ExpComparacion MAYOR_IGUAL_TOKEN • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpAditiva         go to state 87
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 64
+
+   65 ExpAditiva: ExpAditiva MAS_TOKEN • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpMultiplicativa  go to state 88
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 65
+
+   66 ExpAditiva: ExpAditiva MENOS_TOKEN • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpMultiplicativa  go to state 89
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 66
+
+   68 ExpMultiplicativa: ExpMultiplicativa MULT_TOKEN • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 90
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 67
+
+   69 ExpMultiplicativa: ExpMultiplicativa DIV_TOKEN • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 91
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 68
+
+   70 ExpMultiplicativa: ExpMultiplicativa MOD_TOKEN • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    ExpUnaria    go to state 92
+    ExpPostfija  go to state 37
+    ExpPrimaria  go to state 38
+
+
+State 69
+
+   48 ListaArgumentos: ε •  [PAREN_DER_TOKEN]
+   49                | • ListaArgumentosCont
+   50 ListaArgumentosCont: • Expresion
+   51                    | • ListaArgumentosCont COMA_TOKEN Expresion
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   79            | ExpPostfija PAREN_IZQ_TOKEN • ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    $default  reduce using rule 48 (ListaArgumentos)
+
+    ListaArgumentos      go to state 93
+    ListaArgumentosCont  go to state 94
+    Expresion            go to state 95
+    ExpLogicaOr          go to state 31
+    ExpLogicaAnd         go to state 32
+    ExpComparacion       go to state 33
+    ExpAditiva           go to state 34
+    ExpMultiplicativa    go to state 35
+    ExpUnaria            go to state 36
+    ExpPostfija          go to state 37
+    ExpPrimaria          go to state 38
+
+
+State 70
+
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   80            | ExpPostfija CORCH_IZQ_TOKEN • Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 96
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 71
+
+   81 ExpPostfija: ExpPostfija INC_TOKEN •
+
+    $default  reduce using rule 81 (ExpPostfija)
+
+
+State 72
+
+   82 ExpPostfija: ExpPostfija DEC_TOKEN •
+
+    $default  reduce using rule 82 (ExpPostfija)
+
+
+State 73
+
+    5 SetupDef: VOID_TOKEN SETUP_TOKEN PAREN_IZQ_TOKEN • PAREN_DER_TOKEN Bloque
+
+    PAREN_DER_TOKEN  shift, and go to state 97
+
+
+State 74
+
+   88 ExpPrimaria: PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN •
+
+    $default  reduce using rule 88 (ExpPrimaria)
+
+
+State 75
+
+   35 FuncionDef: TipoRetorno ID_TOKEN • PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
+
+    PAREN_IZQ_TOKEN  shift, and go to state 98
+
+
+State 76
+
+   20 DeclaracionInit: ASIGN_TOKEN • Expresion
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 99
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 77
+
+   19 Declarador: ID_TOKEN DeclaracionInit •
+
+    $default  reduce using rule 19 (Declarador)
+
+
+State 78
+
+   18 ListaDeclaradores: ListaDeclaradores COMA_TOKEN • Declarador
+   19 Declarador: • ID_TOKEN DeclaracionInit
+
+    ID_TOKEN  shift, and go to state 51
+
+    Declarador  go to state 100
+
+
+State 79
+
+   52 Expresion: ExpLogicaOr ASIGN_TOKEN Expresion •
+
+    $default  reduce using rule 52 (Expresion)
+
+
+State 80
+
+   54 ExpLogicaOr: ExpLogicaOr OR_TOKEN ExpLogicaAnd •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN]
+   56 ExpLogicaAnd: ExpLogicaAnd • AND_TOKEN ExpComparacion
+
+    AND_TOKEN  shift, and go to state 57
+
+    $default  reduce using rule 54 (ExpLogicaOr)
+
+
+State 81
+
+   56 ExpLogicaAnd: ExpLogicaAnd AND_TOKEN ExpComparacion •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN]
+   58 ExpComparacion: ExpComparacion • IGUAL_TOKEN ExpAditiva
+   59               | ExpComparacion • NO_IGUAL_TOKEN ExpAditiva
+   60               | ExpComparacion • MENOR_TOKEN ExpAditiva
+   61               | ExpComparacion • MENOR_IGUAL_TOKEN ExpAditiva
+   62               | ExpComparacion • MAYOR_TOKEN ExpAditiva
+   63               | ExpComparacion • MAYOR_IGUAL_TOKEN ExpAditiva
+
+    IGUAL_TOKEN        shift, and go to state 58
+    NO_IGUAL_TOKEN     shift, and go to state 59
+    MENOR_TOKEN        shift, and go to state 60
+    MENOR_IGUAL_TOKEN  shift, and go to state 61
+    MAYOR_TOKEN        shift, and go to state 62
+    MAYOR_IGUAL_TOKEN  shift, and go to state 63
+
+    $default  reduce using rule 56 (ExpLogicaAnd)
+
+
+State 82
+
+   58 ExpComparacion: ExpComparacion IGUAL_TOKEN ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 58 (ExpComparacion)
+
+
+State 83
+
+   59 ExpComparacion: ExpComparacion NO_IGUAL_TOKEN ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 59 (ExpComparacion)
+
+
+State 84
+
+   60 ExpComparacion: ExpComparacion MENOR_TOKEN ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 60 (ExpComparacion)
+
+
+State 85
+
+   61 ExpComparacion: ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 61 (ExpComparacion)
+
+
+State 86
+
+   62 ExpComparacion: ExpComparacion MAYOR_TOKEN ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 62 (ExpComparacion)
+
+
+State 87
+
+   63 ExpComparacion: ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN]
+   65 ExpAditiva: ExpAditiva • MAS_TOKEN ExpMultiplicativa
+   66           | ExpAditiva • MENOS_TOKEN ExpMultiplicativa
+
+    MAS_TOKEN    shift, and go to state 64
+    MENOS_TOKEN  shift, and go to state 65
+
+    $default  reduce using rule 63 (ExpComparacion)
+
+
+State 88
+
+   65 ExpAditiva: ExpAditiva MAS_TOKEN ExpMultiplicativa •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN, MAS_TOKEN, MENOS_TOKEN]
+   68 ExpMultiplicativa: ExpMultiplicativa • MULT_TOKEN ExpUnaria
+   69                  | ExpMultiplicativa • DIV_TOKEN ExpUnaria
+   70                  | ExpMultiplicativa • MOD_TOKEN ExpUnaria
+
+    MULT_TOKEN  shift, and go to state 66
+    DIV_TOKEN   shift, and go to state 67
+    MOD_TOKEN   shift, and go to state 68
+
+    $default  reduce using rule 65 (ExpAditiva)
+
+
+State 89
+
+   66 ExpAditiva: ExpAditiva MENOS_TOKEN ExpMultiplicativa •  [PAREN_DER_TOKEN, CORCH_DER_TOKEN, PUNTOYCOMA_TOKEN, COMA_TOKEN, ASIGN_TOKEN, OR_TOKEN, AND_TOKEN, IGUAL_TOKEN, NO_IGUAL_TOKEN, MENOR_TOKEN, MENOR_IGUAL_TOKEN, MAYOR_TOKEN, MAYOR_IGUAL_TOKEN, MAS_TOKEN, MENOS_TOKEN]
+   68 ExpMultiplicativa: ExpMultiplicativa • MULT_TOKEN ExpUnaria
+   69                  | ExpMultiplicativa • DIV_TOKEN ExpUnaria
+   70                  | ExpMultiplicativa • MOD_TOKEN ExpUnaria
+
+    MULT_TOKEN  shift, and go to state 66
+    DIV_TOKEN   shift, and go to state 67
+    MOD_TOKEN   shift, and go to state 68
+
+    $default  reduce using rule 66 (ExpAditiva)
+
+
+State 90
+
+   68 ExpMultiplicativa: ExpMultiplicativa MULT_TOKEN ExpUnaria •
+
+    $default  reduce using rule 68 (ExpMultiplicativa)
+
+
+State 91
+
+   69 ExpMultiplicativa: ExpMultiplicativa DIV_TOKEN ExpUnaria •
+
+    $default  reduce using rule 69 (ExpMultiplicativa)
+
+
+State 92
+
+   70 ExpMultiplicativa: ExpMultiplicativa MOD_TOKEN ExpUnaria •
+
+    $default  reduce using rule 70 (ExpMultiplicativa)
+
+
+State 93
+
+   79 ExpPostfija: ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos • PAREN_DER_TOKEN
+
+    PAREN_DER_TOKEN  shift, and go to state 101
+
+
+State 94
+
+   49 ListaArgumentos: ListaArgumentosCont •  [PAREN_DER_TOKEN]
+   51 ListaArgumentosCont: ListaArgumentosCont • COMA_TOKEN Expresion
+
+    COMA_TOKEN  shift, and go to state 102
+
+    $default  reduce using rule 49 (ListaArgumentos)
+
+
+State 95
+
+   50 ListaArgumentosCont: Expresion •
+
+    $default  reduce using rule 50 (ListaArgumentosCont)
+
+
+State 96
+
+   80 ExpPostfija: ExpPostfija CORCH_IZQ_TOKEN Expresion • CORCH_DER_TOKEN
+
+    CORCH_DER_TOKEN  shift, and go to state 103
+
+
+State 97
+
+    5 SetupDef: VOID_TOKEN SETUP_TOKEN PAREN_IZQ_TOKEN PAREN_DER_TOKEN • Bloque
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 105
+
+
+State 98
+
+   35 FuncionDef: TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN • ListaParametros PAREN_DER_TOKEN Bloque
+   36 ListaParametros: ε •  [PAREN_DER_TOKEN]
+   37                | • ListaParametrosCont
+   38 ListaParametrosCont: • Parametro
+   39                    | • ListaParametrosCont COMA_TOKEN Parametro
+   40 Parametro: • Tipo ID_TOKEN
+   43 Tipo: • TIPO_TOKEN_INT
+   44     | • TIPO_TOKEN_BOOLEAN
+   45     | • TIPO_TOKEN_FLOAT
+   46     | • TIPO_TOKEN_CHAR
+   47     | • TIPO_TOKEN_STRING
+
+    TIPO_TOKEN_INT      shift, and go to state 9
+    TIPO_TOKEN_BOOLEAN  shift, and go to state 10
+    TIPO_TOKEN_FLOAT    shift, and go to state 11
+    TIPO_TOKEN_CHAR     shift, and go to state 12
+    TIPO_TOKEN_STRING   shift, and go to state 13
+
+    $default  reduce using rule 36 (ListaParametros)
+
+    ListaParametros      go to state 106
+    ListaParametrosCont  go to state 107
+    Parametro            go to state 108
+    Tipo                 go to state 109
+
+
+State 99
+
+   20 DeclaracionInit: ASIGN_TOKEN Expresion •
+
+    $default  reduce using rule 20 (DeclaracionInit)
+
+
+State 100
+
+   18 ListaDeclaradores: ListaDeclaradores COMA_TOKEN Declarador •
+
+    $default  reduce using rule 18 (ListaDeclaradores)
+
+
+State 101
+
+   79 ExpPostfija: ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN •
+
+    $default  reduce using rule 79 (ExpPostfija)
+
+
+State 102
+
+   51 ListaArgumentosCont: ListaArgumentosCont COMA_TOKEN • Expresion
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 110
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 103
+
+   80 ExpPostfija: ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN •
+
+    $default  reduce using rule 80 (ExpPostfija)
+
+
+State 104
+
+    6 Bloque: INICIO_TOKEN • ListaInstrucciones FIN_TOKEN
+    7 ListaInstrucciones: ε •
+    8                   | • ListaInstrucciones Instruccion
+
+    $default  reduce using rule 7 (ListaInstrucciones)
+
+    ListaInstrucciones  go to state 111
+
+
+State 105
+
+    5 SetupDef: VOID_TOKEN SETUP_TOKEN PAREN_IZQ_TOKEN PAREN_DER_TOKEN Bloque •
+
+    $default  reduce using rule 5 (SetupDef)
+
+
+State 106
+
+   35 FuncionDef: TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros • PAREN_DER_TOKEN Bloque
+
+    PAREN_DER_TOKEN  shift, and go to state 112
+
+
+State 107
+
+   37 ListaParametros: ListaParametrosCont •  [PAREN_DER_TOKEN]
+   39 ListaParametrosCont: ListaParametrosCont • COMA_TOKEN Parametro
+
+    COMA_TOKEN  shift, and go to state 113
+
+    $default  reduce using rule 37 (ListaParametros)
+
+
+State 108
+
+   38 ListaParametrosCont: Parametro •
+
+    $default  reduce using rule 38 (ListaParametrosCont)
+
+
+State 109
+
+   40 Parametro: Tipo • ID_TOKEN
+
+    ID_TOKEN  shift, and go to state 114
+
+
+State 110
+
+   51 ListaArgumentosCont: ListaArgumentosCont COMA_TOKEN Expresion •
+
+    $default  reduce using rule 51 (ListaArgumentosCont)
+
+
+State 111
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+    6       | INICIO_TOKEN ListaInstrucciones • FIN_TOKEN
+    8 ListaInstrucciones: ListaInstrucciones • Instruccion
+    9 Instruccion: • Declaracion PUNTOYCOMA_TOKEN
+   10            | • Expresion PUNTOYCOMA_TOKEN
+   11            | • If
+   12            | • For
+   13            | • While
+   14            | • DoWhile
+   15            | • Bloque
+   16 Declaracion: • Tipo ListaDeclaradores
+   22 If: • IF_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque IfPrima
+   25 For: • FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+   33 DoWhile: • DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+   34 While: • WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque
+   43 Tipo: • TIPO_TOKEN_INT
+   44     | • TIPO_TOKEN_BOOLEAN
+   45     | • TIPO_TOKEN_FLOAT
+   46     | • TIPO_TOKEN_CHAR
+   47     | • TIPO_TOKEN_STRING
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN            shift, and go to state 4
+    NUMERO_TOKEN        shift, and go to state 5
+    CADENA_TOKEN        shift, and go to state 6
+    TRUE_TOKEN          shift, and go to state 7
+    FALSE_TOKEN         shift, and go to state 8
+    TIPO_TOKEN_INT      shift, and go to state 9
+    TIPO_TOKEN_BOOLEAN  shift, and go to state 10
+    TIPO_TOKEN_FLOAT    shift, and go to state 11
+    TIPO_TOKEN_CHAR     shift, and go to state 12
+    TIPO_TOKEN_STRING   shift, and go to state 13
+    IF_TOKEN            shift, and go to state 115
+    FOR_TOKEN           shift, and go to state 116
+    WHILE_TOKEN         shift, and go to state 117
+    DO_TOKEN            shift, and go to state 118
+    MOVER_TOKEN         shift, and go to state 15
+    GIRARIZQ_TOKEN      shift, and go to state 16
+    GIRARDER_TOKEN      shift, and go to state 17
+    LEERSENSOR_TOKEN    shift, and go to state 18
+    PARAR_TOKEN         shift, and go to state 19
+    REVERSA_TOKEN       shift, and go to state 20
+    INICIO_TOKEN        shift, and go to state 104
+    FIN_TOKEN           shift, and go to state 119
+    PAREN_IZQ_TOKEN     shift, and go to state 21
+    MAS_TOKEN           shift, and go to state 22
+    MENOS_TOKEN         shift, and go to state 23
+    NOT_TOKEN           shift, and go to state 24
+    INC_TOKEN           shift, and go to state 25
+    DEC_TOKEN           shift, and go to state 26
+
+    Bloque             go to state 120
+    Instruccion        go to state 121
+    Declaracion        go to state 122
+    If                 go to state 123
+    For                go to state 124
+    DoWhile            go to state 125
+    While              go to state 126
+    Tipo               go to state 29
+    Expresion          go to state 127
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 112
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+   35 FuncionDef: TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN • Bloque
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 128
+
+
+State 113
+
+   39 ListaParametrosCont: ListaParametrosCont COMA_TOKEN • Parametro
+   40 Parametro: • Tipo ID_TOKEN
+   43 Tipo: • TIPO_TOKEN_INT
+   44     | • TIPO_TOKEN_BOOLEAN
+   45     | • TIPO_TOKEN_FLOAT
+   46     | • TIPO_TOKEN_CHAR
+   47     | • TIPO_TOKEN_STRING
+
+    TIPO_TOKEN_INT      shift, and go to state 9
+    TIPO_TOKEN_BOOLEAN  shift, and go to state 10
+    TIPO_TOKEN_FLOAT    shift, and go to state 11
+    TIPO_TOKEN_CHAR     shift, and go to state 12
+    TIPO_TOKEN_STRING   shift, and go to state 13
+
+    Parametro  go to state 129
+    Tipo       go to state 109
+
+
+State 114
+
+   40 Parametro: Tipo ID_TOKEN •
+
+    $default  reduce using rule 40 (Parametro)
+
+
+State 115
+
+   22 If: IF_TOKEN • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque IfPrima
+
+    PAREN_IZQ_TOKEN  shift, and go to state 130
+
+
+State 116
+
+   25 For: FOR_TOKEN • PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+
+    PAREN_IZQ_TOKEN  shift, and go to state 131
+
+
+State 117
+
+   34 While: WHILE_TOKEN • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque
+
+    PAREN_IZQ_TOKEN  shift, and go to state 132
+
+
+State 118
+
+   33 DoWhile: DO_TOKEN • INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+    INICIO_TOKEN  shift, and go to state 133
+
+
+State 119
+
+    6 Bloque: INICIO_TOKEN ListaInstrucciones FIN_TOKEN •
+
+    $default  reduce using rule 6 (Bloque)
+
+
+State 120
+
+   15 Instruccion: Bloque •
+
+    $default  reduce using rule 15 (Instruccion)
+
+
+State 121
+
+    8 ListaInstrucciones: ListaInstrucciones Instruccion •
+
+    $default  reduce using rule 8 (ListaInstrucciones)
+
+
+State 122
+
+    9 Instruccion: Declaracion • PUNTOYCOMA_TOKEN
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 134
+
+
+State 123
+
+   11 Instruccion: If •
+
+    $default  reduce using rule 11 (Instruccion)
+
+
+State 124
+
+   12 Instruccion: For •
+
+    $default  reduce using rule 12 (Instruccion)
+
+
+State 125
+
+   14 Instruccion: DoWhile •
+
+    $default  reduce using rule 14 (Instruccion)
+
+
+State 126
+
+   13 Instruccion: While •
+
+    $default  reduce using rule 13 (Instruccion)
+
+
+State 127
+
+   10 Instruccion: Expresion • PUNTOYCOMA_TOKEN
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 135
+
+
+State 128
+
+   35 FuncionDef: TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque •
+
+    $default  reduce using rule 35 (FuncionDef)
+
+
+State 129
+
+   39 ListaParametrosCont: ListaParametrosCont COMA_TOKEN Parametro •
+
+    $default  reduce using rule 39 (ListaParametrosCont)
+
+
+State 130
+
+   22 If: IF_TOKEN PAREN_IZQ_TOKEN • Expresion PAREN_DER_TOKEN Bloque IfPrima
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 136
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 131
+
+   16 Declaracion: • Tipo ListaDeclaradores
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN • ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+   26 ForInit: • Declaracion
+   27        | • Expresion
+   28        | ε •  [PUNTOYCOMA_TOKEN]
+   43 Tipo: • TIPO_TOKEN_INT
+   44     | • TIPO_TOKEN_BOOLEAN
+   45     | • TIPO_TOKEN_FLOAT
+   46     | • TIPO_TOKEN_CHAR
+   47     | • TIPO_TOKEN_STRING
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN            shift, and go to state 4
+    NUMERO_TOKEN        shift, and go to state 5
+    CADENA_TOKEN        shift, and go to state 6
+    TRUE_TOKEN          shift, and go to state 7
+    FALSE_TOKEN         shift, and go to state 8
+    TIPO_TOKEN_INT      shift, and go to state 9
+    TIPO_TOKEN_BOOLEAN  shift, and go to state 10
+    TIPO_TOKEN_FLOAT    shift, and go to state 11
+    TIPO_TOKEN_CHAR     shift, and go to state 12
+    TIPO_TOKEN_STRING   shift, and go to state 13
+    MOVER_TOKEN         shift, and go to state 15
+    GIRARIZQ_TOKEN      shift, and go to state 16
+    GIRARDER_TOKEN      shift, and go to state 17
+    LEERSENSOR_TOKEN    shift, and go to state 18
+    PARAR_TOKEN         shift, and go to state 19
+    REVERSA_TOKEN       shift, and go to state 20
+    PAREN_IZQ_TOKEN     shift, and go to state 21
+    MAS_TOKEN           shift, and go to state 22
+    MENOS_TOKEN         shift, and go to state 23
+    NOT_TOKEN           shift, and go to state 24
+    INC_TOKEN           shift, and go to state 25
+    DEC_TOKEN           shift, and go to state 26
+
+    $default  reduce using rule 28 (ForInit)
+
+    Declaracion        go to state 137
+    ForInit            go to state 138
+    Tipo               go to state 29
+    Expresion          go to state 139
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 132
+
+   34 While: WHILE_TOKEN PAREN_IZQ_TOKEN • Expresion PAREN_DER_TOKEN Bloque
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 140
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 133
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+   33 DoWhile: DO_TOKEN INICIO_TOKEN • Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 141
+
+
+State 134
+
+    9 Instruccion: Declaracion PUNTOYCOMA_TOKEN •
+
+    $default  reduce using rule 9 (Instruccion)
+
+
+State 135
+
+   10 Instruccion: Expresion PUNTOYCOMA_TOKEN •
+
+    $default  reduce using rule 10 (Instruccion)
+
+
+State 136
+
+   22 If: IF_TOKEN PAREN_IZQ_TOKEN Expresion • PAREN_DER_TOKEN Bloque IfPrima
+
+    PAREN_DER_TOKEN  shift, and go to state 142
+
+
+State 137
+
+   26 ForInit: Declaracion •
+
+    $default  reduce using rule 26 (ForInit)
+
+
+State 138
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit • PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 143
+
+
+State 139
+
+   27 ForInit: Expresion •
+
+    $default  reduce using rule 27 (ForInit)
+
+
+State 140
+
+   34 While: WHILE_TOKEN PAREN_IZQ_TOKEN Expresion • PAREN_DER_TOKEN Bloque
+
+    PAREN_DER_TOKEN  shift, and go to state 144
+
+
+State 141
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque • FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+    FIN_TOKEN  shift, and go to state 145
+
+
+State 142
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+   22 If: IF_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN • Bloque IfPrima
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 146
+
+
+State 143
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN • ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+   29 ExpresionLogicaFor: • Expresion
+   30                   | ε •  [PUNTOYCOMA_TOKEN]
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    $default  reduce using rule 30 (ExpresionLogicaFor)
+
+    ExpresionLogicaFor  go to state 147
+    Expresion           go to state 148
+    ExpLogicaOr         go to state 31
+    ExpLogicaAnd        go to state 32
+    ExpComparacion      go to state 33
+    ExpAditiva          go to state 34
+    ExpMultiplicativa   go to state 35
+    ExpUnaria           go to state 36
+    ExpPostfija         go to state 37
+    ExpPrimaria         go to state 38
+
+
+State 144
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+   34 While: WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN • Bloque
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 149
+
+
+State 145
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN • WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+    WHILE_TOKEN  shift, and go to state 150
+
+
+State 146
+
+   22 If: IF_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque • IfPrima
+   23 IfPrima: • ELSE_TOKEN Bloque
+   24        | ε •  [ID_TOKEN, NUMERO_TOKEN, CADENA_TOKEN, TRUE_TOKEN, FALSE_TOKEN, TIPO_TOKEN_INT, TIPO_TOKEN_BOOLEAN, TIPO_TOKEN_FLOAT, TIPO_TOKEN_CHAR, TIPO_TOKEN_STRING, IF_TOKEN, FOR_TOKEN, WHILE_TOKEN, DO_TOKEN, MOVER_TOKEN, GIRARIZQ_TOKEN, GIRARDER_TOKEN, LEERSENSOR_TOKEN, PARAR_TOKEN, REVERSA_TOKEN, INICIO_TOKEN, FIN_TOKEN, PAREN_IZQ_TOKEN, MAS_TOKEN, MENOS_TOKEN, NOT_TOKEN, INC_TOKEN, DEC_TOKEN]
+
+    ELSE_TOKEN  shift, and go to state 151
+
+    $default  reduce using rule 24 (IfPrima)
+
+    IfPrima  go to state 152
+
+
+State 147
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor • PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 153
+
+
+State 148
+
+   29 ExpresionLogicaFor: Expresion •
+
+    $default  reduce using rule 29 (ExpresionLogicaFor)
+
+
+State 149
+
+   34 While: WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque •
+
+    $default  reduce using rule 34 (While)
+
+
+State 150
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+    PAREN_IZQ_TOKEN  shift, and go to state 154
+
+
+State 151
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+   23 IfPrima: ELSE_TOKEN • Bloque
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 155
+
+
+State 152
+
+   22 If: IF_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque IfPrima •
+
+    $default  reduce using rule 22 (If)
+
+
+State 153
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN • ForStep PAREN_DER_TOKEN Bloque
+   31 ForStep: • Expresion
+   32        | ε •  [PAREN_DER_TOKEN]
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    $default  reduce using rule 32 (ForStep)
+
+    ForStep            go to state 156
+    Expresion          go to state 157
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 154
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN • Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+   52 Expresion: • ExpLogicaOr ASIGN_TOKEN Expresion
+   53          | • ExpLogicaOr
+   54 ExpLogicaOr: • ExpLogicaOr OR_TOKEN ExpLogicaAnd
+   55            | • ExpLogicaAnd
+   56 ExpLogicaAnd: • ExpLogicaAnd AND_TOKEN ExpComparacion
+   57             | • ExpComparacion
+   58 ExpComparacion: • ExpComparacion IGUAL_TOKEN ExpAditiva
+   59               | • ExpComparacion NO_IGUAL_TOKEN ExpAditiva
+   60               | • ExpComparacion MENOR_TOKEN ExpAditiva
+   61               | • ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
+   62               | • ExpComparacion MAYOR_TOKEN ExpAditiva
+   63               | • ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
+   64               | • ExpAditiva
+   65 ExpAditiva: • ExpAditiva MAS_TOKEN ExpMultiplicativa
+   66           | • ExpAditiva MENOS_TOKEN ExpMultiplicativa
+   67           | • ExpMultiplicativa
+   68 ExpMultiplicativa: • ExpMultiplicativa MULT_TOKEN ExpUnaria
+   69                  | • ExpMultiplicativa DIV_TOKEN ExpUnaria
+   70                  | • ExpMultiplicativa MOD_TOKEN ExpUnaria
+   71                  | • ExpUnaria
+   72 ExpUnaria: • NOT_TOKEN ExpUnaria
+   73          | • MENOS_TOKEN ExpUnaria
+   74          | • MAS_TOKEN ExpUnaria
+   75          | • INC_TOKEN ExpUnaria
+   76          | • DEC_TOKEN ExpUnaria
+   77          | • ExpPostfija
+   78 ExpPostfija: • ExpPrimaria
+   79            | • ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+   80            | • ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+   81            | • ExpPostfija INC_TOKEN
+   82            | • ExpPostfija DEC_TOKEN
+   83 ExpPrimaria: • ID_TOKEN
+   84            | • NUMERO_TOKEN
+   85            | • CADENA_TOKEN
+   86            | • TRUE_TOKEN
+   87            | • FALSE_TOKEN
+   88            | • PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN
+   89            | • MOVER_TOKEN
+   90            | • GIRARIZQ_TOKEN
+   91            | • GIRARDER_TOKEN
+   92            | • LEERSENSOR_TOKEN
+   93            | • PARAR_TOKEN
+   94            | • REVERSA_TOKEN
+
+    ID_TOKEN          shift, and go to state 4
+    NUMERO_TOKEN      shift, and go to state 5
+    CADENA_TOKEN      shift, and go to state 6
+    TRUE_TOKEN        shift, and go to state 7
+    FALSE_TOKEN       shift, and go to state 8
+    MOVER_TOKEN       shift, and go to state 15
+    GIRARIZQ_TOKEN    shift, and go to state 16
+    GIRARDER_TOKEN    shift, and go to state 17
+    LEERSENSOR_TOKEN  shift, and go to state 18
+    PARAR_TOKEN       shift, and go to state 19
+    REVERSA_TOKEN     shift, and go to state 20
+    PAREN_IZQ_TOKEN   shift, and go to state 21
+    MAS_TOKEN         shift, and go to state 22
+    MENOS_TOKEN       shift, and go to state 23
+    NOT_TOKEN         shift, and go to state 24
+    INC_TOKEN         shift, and go to state 25
+    DEC_TOKEN         shift, and go to state 26
+
+    Expresion          go to state 158
+    ExpLogicaOr        go to state 31
+    ExpLogicaAnd       go to state 32
+    ExpComparacion     go to state 33
+    ExpAditiva         go to state 34
+    ExpMultiplicativa  go to state 35
+    ExpUnaria          go to state 36
+    ExpPostfija        go to state 37
+    ExpPrimaria        go to state 38
+
+
+State 155
+
+   23 IfPrima: ELSE_TOKEN Bloque •
+
+    $default  reduce using rule 23 (IfPrima)
+
+
+State 156
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep • PAREN_DER_TOKEN Bloque
+
+    PAREN_DER_TOKEN  shift, and go to state 159
+
+
+State 157
+
+   31 ForStep: Expresion •
+
+    $default  reduce using rule 31 (ForStep)
+
+
+State 158
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion • PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
+
+    PAREN_DER_TOKEN  shift, and go to state 160
+
+
+State 159
+
+    6 Bloque: • INICIO_TOKEN ListaInstrucciones FIN_TOKEN
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN • Bloque
+
+    INICIO_TOKEN  shift, and go to state 104
+
+    Bloque  go to state 161
+
+
+State 160
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN • PUNTOYCOMA_TOKEN
+
+    PUNTOYCOMA_TOKEN  shift, and go to state 162
+
+
+State 161
+
+   25 For: FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque •
+
+    $default  reduce using rule 25 (For)
+
+
+State 162
+
+   33 DoWhile: DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN •
+
+    $default  reduce using rule 33 (DoWhile)

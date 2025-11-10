@@ -2,26 +2,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ast.h" // Incluimos el AST para TipoDato (aunque no se usa aquí)
+#include "ast.h" /* Incluimos el AST */
 
 /* Incluimos el archivo de tokens generado por Bison */
 #include "parser.tab.h" 
 
-/* * Bison 3+ requiere esta declaración.
- * Le dice a Flex cómo y dónde almacenar el valor del token (yylval)
- * y la información de ubicación (yylloc).
+/* Prototipo de la funcion de error de Bison */
+void yyerror(const char *s); 
+
+/*
+ * Configuración para yycolumn y yylloc.
+ * Combinamos ambas definiciones de YY_USER_ACTION en una sola.
  */
 #ifndef YY_NULL
 #define YY_NULL 0
 #endif
+
+int yycolumn = 1;
+
 #define YY_USER_ACTION \
     yylloc.first_line = yylineno; \
     yylloc.first_column = yycolumn; \
     yylloc.last_line = yylineno; \
-    yylloc.last_column = yycolumn + yyleng - 1;
-
-int yycolumn = 1;
-#define YY_USER_ACTION yycolumn += yyleng;
+    yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
 
 %}
 
@@ -43,10 +47,6 @@ COMENT_LIN  "//".*
 COMENT_BLOQ "/*"([^*]|(\*+[^*/]))*\*+"/"
 
 %%
-
-/* ------------------------------------ */
-/* Palabras Clave (Keywords)            */
-/* ------------------------------------ */
 "int"       { return TIPO_TOKEN_INT; }
 "boolean"   { return TIPO_TOKEN_BOOLEAN; }
 "float"     { return TIPO_TOKEN_FLOAT; }
@@ -59,13 +59,18 @@ COMENT_BLOQ "/*"([^*]|(\*+[^*/]))*\*+"/"
 "while"     { return WHILE_TOKEN; }
 "do"        { return DO_TOKEN; }
 "void"      { return VOID_TOKEN; }
+"setup"     { return SETUP_TOKEN; }
+
+"mover"      { return MOVER_TOKEN; }      
+"girarIzq"   { return GIRARIZQ_TOKEN; }   
+"girarDer"   { return GIRARDER_TOKEN; }   
+"leerSensor" { return LEERSENSOR_TOKEN; } 
+"parar"      { return PARAR_TOKEN; }      
+"reversa"    { return REVERSA_TOKEN; }    
 
 "true"      { yylval.booleano = 1; return TRUE_TOKEN; }
 "false"     { yylval.booleano = 0; return FALSE_TOKEN; }
 
-/* ------------------------------------ */
-/* Literales (Números, Cadenas)         */
-/* ------------------------------------ */
 {NUMERO}    {
                 yylval.numero = atof(yytext);
                 return NUMERO_TOKEN;
@@ -85,17 +90,11 @@ COMENT_BLOQ "/*"([^*]|(\*+[^*/]))*\*+"/"
                 return CADENA_TOKEN;
             }
 
-/* ------------------------------------ */
-/* Identificadores (debe ir después de Keywords) */
-/* ------------------------------------ */
 {ID}        {
                 yylval.cadena = strdup(yytext);
                 return ID_TOKEN;
             }
 
-/* ------------------------------------ */
-/* Operadores                           */
-/* ------------------------------------ */
 "="         { return ASIGN_TOKEN; }
 "||"        { return OR_TOKEN; }
 "&&"        { return AND_TOKEN; }
@@ -114,9 +113,6 @@ COMENT_BLOQ "/*"([^*]|(\*+[^*/]))*\*+"/"
 "++"        { return INC_TOKEN; }
 "--"        { return DEC_TOKEN; }
 
-/* ------------------------------------ */
-/* Puntuación y Delimitadores           */
-/* ------------------------------------ */
 "{"         { return INICIO_TOKEN; }
 "}"         { return FIN_TOKEN; }
 "("         { return PAREN_IZQ_TOKEN; }
@@ -126,17 +122,11 @@ COMENT_BLOQ "/*"([^*]|(\*+[^*/]))*\*+"/"
 ";"         { return PUNTOYCOMA_TOKEN; }
 ","         { return COMA_TOKEN; }
 
-/* ------------------------------------ */
-/* Ignorar Espacios y Comentarios       */
-/* ------------------------------------ */
 {ESPACIO}   { /* Ignorar */ }
 {NUEVA_LINEA} { yycolumn = 1; /* Reiniciar columna */ }
 {COMENT_LIN}  { yycolumn = 1; /* Ignorar */ }
 {COMENT_BLOQ} { /* Ignorar */ }
 
-/* ------------------------------------ */
-/* Error Léxico                         */
-/* ------------------------------------ */
 .           { 
                 fprintf(stderr, "Error Léxico en línea %d: Caracter inesperado '%s'\n", yylineno, yytext);
                 /* Podemos decidir parar o continuar */
