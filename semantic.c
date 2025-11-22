@@ -7,6 +7,9 @@ Simbolo tabla_simbolos[MAX_SIMBOLOS];
 int num_simbolos = 0;
 int ambito_actual = 0; // 0 = Global
 
+/* --- NUEVO: Contador global de direcciones de memoria para el Bytecode --- */
+int contador_direcciones = 0;
+
 /* --- Prototipos Internos --- */
 Simbolo* ts_buscar_en_ambito_actual(char* nombre);
 
@@ -14,26 +17,18 @@ Simbolo* ts_buscar_en_ambito_actual(char* nombre);
 
 void ts_entrar_ambito() {
     ambito_actual++;
-    printf("[Semantico: Entrando en ambito %d]\n", ambito_actual);
+    // printf("[Semantico: Entrando en ambito %d]\n", ambito_actual);
 }
 
 void ts_salir_ambito() {
-    printf("[Semantico: Saliendo de ambito %d]\n", ambito_actual);
-
-    // Limpieza real de la tabla de símbolos
-    while (num_simbolos > 0 && tabla_simbolos[num_simbolos - 1].ambito == ambito_actual) {
-        
-        num_simbolos--; // "Borra" el símbolo del conteo
-        
-        printf("[Semantico: Liberando '%s' (ambito %d)]\n", 
-               tabla_simbolos[num_simbolos].nombre, 
-               ambito_actual);
-        
-        // Libera la memoria del string duplicado
-        free(tabla_simbolos[num_simbolos].nombre); 
-        tabla_simbolos[num_simbolos].nombre = NULL;
-    }
-    
+    /* * CAMBIO IMPORTANTE PARA CODEGEN:
+     * Ya NO borramos los símbolos al salir del ámbito.
+     * Necesitamos que permanezcan en la tabla para que el Generador de Código
+     * pueda encontrar sus direcciones de memoria más tarde.
+     * La validación de ámbito (ts_buscar) sigue funcionando porque busca
+     * de atrás hacia adelante y verifica el nivel de ámbito si es necesario.
+     */
+    // printf("[Semantico: Saliendo de ambito %d]\n", ambito_actual);
     ambito_actual--;
 }
 
@@ -48,13 +43,13 @@ Simbolo* ts_buscar(char* nombre) {
 }
 
 /**
- * NUEVA FUNCIÓN:
  * Busca un símbolo ÚNICAMENTE en el ámbito actual.
  * Es usada para detectar redeclaraciones.
  */
 Simbolo* ts_buscar_en_ambito_actual(char* nombre) {
     for (int i = num_simbolos - 1; i >= 0; i--) {
         if (tabla_simbolos[i].ambito < ambito_actual) {
+            // Hemos salido del ámbito actual
             break; 
         }
         if (strcmp(tabla_simbolos[i].nombre, nombre) == 0) {
@@ -65,8 +60,8 @@ Simbolo* ts_buscar_en_ambito_actual(char* nombre) {
 }
 
 /*
- * CAMBIO: La firma de la función ahora acepta un ASTNode*
- * para la lista de parámetros (será NULL si no es una función).
+ * Inserta un símbolo en la tabla.
+ * params: Lista de parámetros (ASTNode*) si es una función, o NULL si es variable.
  */
 int ts_insertar(char* nombre, TipoDato tipo, int linea, ASTNode* params) {
     if (num_simbolos >= MAX_SIMBOLOS) {
@@ -74,6 +69,7 @@ int ts_insertar(char* nombre, TipoDato tipo, int linea, ASTNode* params) {
         return 0;
     }
     
+    /* Validar redeclaraciones en el mismo ámbito */
     Simbolo* existente = ts_buscar_en_ambito_actual(nombre);
     if (existente) {
         fprintf(stderr, "Error Semantico (linea %d): Redeclaracion de '%s'. Previamente declarado en linea %d.\n",
@@ -87,20 +83,35 @@ int ts_insertar(char* nombre, TipoDato tipo, int linea, ASTNode* params) {
     tabla_simbolos[num_simbolos].linea = linea;
     tabla_simbolos[num_simbolos].parametros = params; // Guardar la lista de parámetros
     
-    printf("[Semantico: Declarado '%s' (tipo %d) en ambito %d]\n", nombre, tipo, ambito_actual);
+    /* --- ASIGNACIÓN DE DIRECCIÓN PARA BYTECODE --- */
+    // Asignamos la siguiente dirección disponible y aumentamos el contador
+    tabla_simbolos[num_simbolos].direccion = contador_direcciones++;
+    
+    printf("[Semantico: Declarado '%s' (Addr: %d, Tipo: %d) en ambito %d]\n", 
+           nombre, tabla_simbolos[num_simbolos].direccion, tipo, ambito_actual);
     
     num_simbolos++;
     return 1;
 }
 
+/* * Función de limpieza obsoleta para uso interno.
+ * Ahora usamos ts_liberar_total() al final del main.
+ */
 void ts_liberar() {
+    // No hace nada intencionalmente ahora, para preservar símbolos para el codegen.
+}
+
+/* Nueva función para limpiar todo AL FINAL del programa (en main.c) */
+void ts_liberar_total() {
     for (int i = 0; i < num_simbolos; i++) {
-        // CAMBIO: Añadida comprobación de NULL
         if (tabla_simbolos[i].nombre) {
             free(tabla_simbolos[i].nombre);
         }
+        // Nota: No liberamos 'parametros' aquí porque son nodos del AST 
+        // y se liberan con liberar_arbol() en el main.
     }
     num_simbolos = 0;
+    contador_direcciones = 0;
 }
 
 /* --- Prototipos de los Recorredores (Walkers) --- */
@@ -115,32 +126,37 @@ void analizar_bloque(ASTNode* nodo);
 /* FASE 1: RECOLECCIÓN DE SÍMBOLOS                        */
 /* ====================================================== */
 
+/**
+ * Recorre el AST buscando solo declaraciones de alto nivel
+ * (variables globales y funciones) para añadirlas a la TS.
+ */
 void recolectar_simbolos(ASTNode* nodo) {
     if (!nodo || nodo->tipo == NODO_VACIO) return;
 
     switch (nodo->tipo) {
         case NODO_PROGRAMA:
+            // Recorrer listas de globales y funciones
             recolectar_simbolos(nodo->hijo1); // DeclaracionGlobal
             recolectar_simbolos(nodo->hijo3); // FuncionDef
             break;
 
         case NODO_DECLARACION:
+            // Es una declaración global (manejada por la lista)
             analizar_declaracion(nodo);
             break;
             
         case NODO_ASIGNACION:
+            // Asignación global
             break;
 
         case NODO_FUNCION_DEF:
         {
+            // Solo insertamos el encabezado de la función
             char* nombre_func = nodo->hijo2->data.cadena;
             TipoDato tipo_retorno = nodo->hijo1->data.tipo_dato;
             printf("[Fase 1: Registrando funcion '%s']\n", nombre_func);
             
-            /*
-             * CAMBIO: Ahora pasamos nodo->hijo3 (la lista de parámetros)
-             * a ts_insertar para que se guarde en el símbolo.
-             */
+            /* Guardamos nodo->hijo3 (la lista de parámetros) en el símbolo */
             ts_insertar(nombre_func, tipo_retorno, nodo->linea, nodo->hijo3);
             
             break;
@@ -163,6 +179,10 @@ void recolectar_simbolos(ASTNode* nodo) {
 /* FASE 2: ANÁLISIS DE CUERPOS                            */
 /* ====================================================== */
 
+/**
+ * Recorre el AST analizando los cuerpos de las funciones (setup, etc.)
+ * y validando toda la lógica interna.
+ */
 void analizar_cuerpos(ASTNode* nodo) {
     if (!nodo || nodo->tipo == NODO_VACIO) return;
 
@@ -183,21 +203,29 @@ void analizar_cuerpos(ASTNode* nodo) {
         {
             char* nombre_func = nodo->hijo2->data.cadena;
             printf("[Fase 2: Analizando cuerpo de funcion '%s']\n", nombre_func);
+
+            // 1. Entrar en el nuevo ámbito de la función
             ts_entrar_ambito();
 
+            // 2. Declarar parámetros en el nuevo ámbito (como variables locales)
             ASTNode* param = nodo->hijo3;
             while(param && param->tipo != NODO_VACIO) {
                 TipoDato tipo_param = param->hijo1->data.tipo_dato;
                 char* nombre_param = param->hijo2->data.cadena;
                 
-                /* CAMBIO: Pasamos NULL como 4to argumento, ya que esto NO es una función */
+                // NULL como 4to argumento, ya que los parámetros son variables, no funciones
                 ts_insertar(nombre_param, tipo_param, param->linea, NULL);
                 
                 param = param->siguiente;
             }
 
+            // 3. Analizar el bloque de la función
             analizar_bloque(nodo->hijo4);
+
+            // 4. Salir del ámbito de la función
             ts_salir_ambito();
+            
+            // Seguir al siguiente nodo de función en la lista
             analizar_cuerpos(nodo->siguiente);
             break;
         }
@@ -267,6 +295,7 @@ void analizar_cuerpos(ASTNode* nodo) {
             break;
             
         default:
+            // Expresiones sueltas (ej. llamada_funcion();)
             if (nodo->tipo >= NODO_LLAMADA_FUNCION && nodo->tipo <= NODO_BOOLEANO) {
                 analizar_expresion(nodo);
             }
@@ -278,6 +307,7 @@ void analizar_cuerpos(ASTNode* nodo) {
 /* FUNCIONES AUXILIARES (COMPARTIDAS)                     */
 /* ====================================================== */
 
+/* Función principal del analizador semántico */
 int analizar_semantica(ASTNode* raiz) {
     if (!raiz) {
         fprintf(stderr, "Error: El arbol AST esta vacio.\n");
@@ -292,32 +322,38 @@ int analizar_semantica(ASTNode* raiz) {
     
     printf("\n--- Fin del Analisis Semantico ---\n");
     
-    ts_liberar();
+    /* CAMBIO: NO llamamos a ts_liberar() aquí. 
+       Se debe llamar a ts_liberar_total() en el main después de generar código */
+    
     return 1;
 }
 
+/* Analiza un bloque (que es una lista de instrucciones) */
 void analizar_bloque(ASTNode* nodo_bloque) {
     if (!nodo_bloque || nodo_bloque->tipo != NODO_BLOQUE) return;
     
     ASTNode* instruccion = nodo_bloque->hijo1;
     while (instruccion && instruccion->tipo != NODO_VACIO) {
-        analizar_cuerpos(instruccion);
+        analizar_cuerpos(instruccion); 
         instruccion = instruccion->siguiente;
     }
 }
 
+/* Analiza una declaración e inserta en la TS */
 void analizar_declaracion(ASTNode* nodo) {
     if (nodo->tipo != NODO_DECLARACION) return;
     
     TipoDato tipo_base = nodo->hijo1->data.tipo_dato;
     
+    // Recorremos la lista de declaradores (hijo2)
     ASTNode* decl = nodo->hijo2;
     while(decl && decl->tipo != NODO_VACIO) {
         char* nombre_id = decl->hijo1->data.cadena;
         
-        /* CAMBIO: Pasamos NULL como 4to argumento, ya que esto NO es una función */
+        // Insertar variable en la tabla de símbolos
         ts_insertar(nombre_id, tipo_base, decl->linea, NULL);
         
+        // Si hay una inicialización (ej. int x = 5;)
         if (decl->hijo2->tipo != NODO_VACIO) {
             TipoDato tipo_expr = analizar_expresion(decl->hijo2);
             
@@ -337,12 +373,14 @@ void analizar_declaracion(ASTNode* nodo) {
 }
 
 
+/* Analiza una expresión y devuelve su tipo */
 TipoDato analizar_expresion(ASTNode* nodo) {
     if (!nodo || nodo->tipo == NODO_VACIO) return TIPO_DESCONOCIDO;
 
     switch (nodo->tipo) {
         case NODO_NUMERO:
         {
+            // Si el número no tiene parte decimal, trátalo como TIPO_INT
             double val = nodo->data.valor_num;
             if (val == (long)val) {
                 return TIPO_INT;
@@ -356,14 +394,15 @@ TipoDato analizar_expresion(ASTNode* nodo) {
 
         case NODO_ASIGNACION:
         {
+            // Validar que el lado izquierdo (hijo1) es un "l-value"
             ASTNode* lado_izq = nodo->hijo1;
             
             if (lado_izq->tipo != NODO_IDENTIFICADOR) {
                 fprintf(stderr, "Error Semantico (linea %d): El lado izquierdo de la asignacion no es una variable.\n", nodo->linea);
                 return TIPO_DESCONOCIDO;
             }
-
             
+            // Obtener el nombre y tipo del símbolo
             char* nombre_id = lado_izq->data.cadena;
             Simbolo* sym = ts_buscar(nombre_id);
             if (!sym) {
@@ -371,9 +410,11 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                 return TIPO_DESCONOCIDO;
             }
             
+            // Analizar el lado derecho
             TipoDato tipo_var = sym->tipo;
             TipoDato tipo_expr = analizar_expresion(nodo->hijo2);
             
+            // Chequear compatibilidad de tipos
             if (tipo_var != tipo_expr) {
                  if (tipo_var == TIPO_FLOAT && tipo_expr == TIPO_INT) {
                     // Válido (ej. f = 5;)
@@ -403,12 +444,14 @@ TipoDato analizar_expresion(ASTNode* nodo) {
             TipoDato tipo_der = analizar_expresion(nodo->hijo2);
             char* op = nodo->data.op_unario;
             
+            // Operadores Lógicos
             if (strcmp(op, "&&") == 0 || strcmp(op, "||") == 0) {
                 if (tipo_izq != TIPO_BOOLEAN || tipo_der != TIPO_BOOLEAN) {
                     fprintf(stderr, "Error Semantico (linea %d): Operador '%s' requiere operandos booleanos.\n", nodo->linea, op);
                 }
                 return TIPO_BOOLEAN;
             }
+            // Comparación
             if (strcmp(op, "==") == 0 || strcmp(op, "!=") == 0 ||
                 strcmp(op, "<") == 0  || strcmp(op, "<=") == 0 ||
                 strcmp(op, ">") == 0  || strcmp(op, ">=") == 0) {
@@ -420,6 +463,7 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                 return TIPO_BOOLEAN;
             }
             
+            // Aritmética
             if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 ||
                 strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
                 
@@ -431,6 +475,7 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                 return TIPO_INT;
             }
 
+            // Módulo
             if (strcmp(op, "%") == 0) {
                 if (tipo_izq != TIPO_INT || tipo_der != TIPO_INT) {
                     fprintf(stderr, "Error Semantico (linea %d): Operador '%%' requiere operandos enteros.\n", nodo->linea);
@@ -438,19 +483,16 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                 return TIPO_INT;
             }
 
-            
+            // Acceso a Array (Hack temporal)
             if (strcmp(op, "[]") == 0) {
-                // TODO: Implementar lógica de tipo array
-                // Por ahora, solo analizamos el índice para encontrar errores
+                // Comprobar que el índice es entero
                 TipoDato tipo_indice = analizar_expresion(nodo->hijo2);
                 if (tipo_indice != TIPO_INT) {
                      fprintf(stderr, "Error Semantico (linea %d): El indice de acceso a array debe ser un entero (TIPO_INT).\n", nodo->linea);
                 }
-                // HACK: Asumimos que el tipo del acceso es el tipo base
-                // (esto es incorrecto, pero es lo mejor que podemos hacer)
+                // HACK: Asumimos que el tipo del acceso es el tipo base de la variable izquierda
                 return tipo_izq; 
             }
-
             
             return TIPO_DESCONOCIDO;
         }
@@ -471,10 +513,11 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                 if (tipo_hijo != TIPO_INT && tipo_hijo != TIPO_FLOAT) {
                     fprintf(stderr, "Error Semantico (linea %d): Operador unario '%s' requiere un operando numerico.\n", nodo->linea, op);
                 }
-                return tipo_hijo;
+                return tipo_hijo; 
             }
             
             if (strcmp(op, "++") == 0 || strcmp(op, "--") == 0) {
+                // Validar L-value
                 if (nodo->hijo1->tipo != NODO_IDENTIFICADOR) {
                     fprintf(stderr, "Error Semantico (linea %d): El operador prefijo '%s' requiere un l-value (variable modificable).\n", nodo->linea, op);
                 }
@@ -493,6 +536,7 @@ TipoDato analizar_expresion(ASTNode* nodo) {
             char* op = nodo->data.op_unario;
             TipoDato tipo_hijo = analizar_expresion(nodo->hijo1);
             
+            // Validar L-value
             if (nodo->hijo1->tipo != NODO_IDENTIFICADOR) {
                 fprintf(stderr, "Error Semantico (linea %d): El operador postfijo '%s' requiere un l-value (variable modificable).\n", nodo->linea, op);
             }
@@ -507,6 +551,7 @@ TipoDato analizar_expresion(ASTNode* nodo) {
         {
             ASTNode* callee = nodo->hijo1;
             
+            // Caso 1: Funciones definidas por el usuario
             if (callee->tipo == NODO_IDENTIFICADOR) {
                 char* nombre_func = callee->data.cadena;
                 Simbolo* sym = ts_buscar(nombre_func);
@@ -515,8 +560,9 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                     return TIPO_DESCONOCIDO;
                 }
 
-                ASTNode* param = sym->parametros; // Lista de parámetros esperados (de la TS)
-                ASTNode* arg = nodo->hijo2;    // Lista de argumentos dados (del AST)
+                // Validar argumentos contra parámetros
+                ASTNode* param = sym->parametros; // Lista de parámetros esperados
+                ASTNode* arg = nodo->hijo2;    // Lista de argumentos dados
                 int arg_count = 0;
 
                 while ((param && param->tipo != NODO_VACIO) && (arg && arg->tipo != NODO_VACIO)) {
@@ -527,9 +573,8 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                     TipoDato tipo_arg = analizar_expresion(arg);
 
                     if (tipo_param != tipo_arg) {
-                        // Permitir INT -> FLOAT
                         if (tipo_param == TIPO_FLOAT && tipo_arg == TIPO_INT) {
-                           // Válido
+                           // Válido conversión implícita
                         } else {
                             fprintf(stderr, "Error Semantico (linea %d): Incompatibilidad de tipos en argumento %d de '%s'. Se esperaba %d pero se obtuvo %d.\n",
                                     arg->linea, arg_count, nombre_func, tipo_param, tipo_arg);
@@ -540,15 +585,16 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                     arg = arg->siguiente;
                 }
 
-                // Comprobar desajuste de cantidad de argumentos
+                // Validar número de argumentos
                 if ((param && param->tipo != NODO_VACIO) && (!arg || arg->tipo == NODO_VACIO)) {
                     fprintf(stderr, "Error Semantico (linea %d): No hay suficientes argumentos para la funcion '%s'.\n", nodo->linea, nombre_func);
                 } else if ((!param || param->tipo == NODO_VACIO) && (arg && arg->tipo != NODO_VACIO)) {
                      fprintf(stderr, "Error Semantico (linea %d): Demasiados argumentos para la funcion '%s'.\n", nodo->linea, nombre_func);
                 }
                 
-                return sym->tipo; // Devuelve el tipo de retorno de la función
+                return sym->tipo; // Devuelve el tipo de retorno
             
+            // Caso 2: Funciones reservadas del sistema
             } else if (callee->tipo == NODO_FUNCION_RESERVADA) {
                 char* nombre_func = callee->data.cadena;
                 printf("[Fase 2: Analizando llamada a func reservada '%s']\n", nombre_func);

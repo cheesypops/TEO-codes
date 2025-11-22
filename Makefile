@@ -11,10 +11,11 @@ BISON = bison
 TARGET = mi_compilador
 
 # Archivos fuente .c
-# parser.tab.c y lexer.yy.c son generados por Bison y Flex
-SOURCES = main.c ast.c semantic.c parser.tab.c lexer.yy.c
+SOURCES = main.c ast.c semantic.c codegen.c parser.tab.c lexer.yy.c
+
 # Archivos de cabecera .h
-HEADERS = ast.h semantic.h parser.tab.h
+HEADERS = ast.h semantic.h codegen.h parser.tab.h
+
 # Archivos objeto .o
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -40,7 +41,7 @@ lexer.yy.c: lexer.l parser.tab.h
 
 # Regla para limpiar los archivos generados
 clean:
-	rm -f $(TARGET) $(OBJECTS) parser.tab.c parser.tab.h lexer.yy.c
+	rm -f $(TARGET) $(OBJECTS) parser.tab.c parser.tab.h lexer.yy.c parser.output codigo.txt
 
 # Regla para ejecutar (requiere un archivo 'test.txt')
 run: all
