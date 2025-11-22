@@ -1,75 +1,22 @@
-# Archivos ejecutables
+# Archivos generados por el compilador
+build/
+*.o
 *.exe
-*.out
-calculadora
-analizador
-lexer
-# parser - comentado para permitir la carpeta Parser/
+
+# Archivos generados por Bison
+src/parser/parser.tab.c
+src/parser/parser.tab.h
+src/parser/parser.output
+
+# Archivos generados por Flex
+src/lexer/lexer.yy.c
+
+# Ejecutable
+mi_compilador
+mi_compilador.exe
 
 # Archivos de depuración
 *.dSYM/
-*.debug
+*.su
+*.idb
 *.pdb
-
-# Archivos generados por Flex y Bison
-lex.yy.c
-lex.yy.h
-*.tab.c
-*.tab.h
-*.yy.c
-
-# Archivos objeto y bibliotecas
-*.o
-*.a
-*.so
-*.dylib
-*.lib
-*.dll
-
-# Archivos temporales del sistema
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Archivos de respaldo
-*~
-*.bak
-*.swp
-*.swo
-*.tmp
-
-# Archivos de configuración del IDE
-.vscode/
-.idea/
-*.sublime-*
-.project
-.cproject
-
-# Archivos de logs
-*.log
-*.err
-
-# Directorios de compilación
-build/
-dist/
-bin/
-obj/
-
-# Archivos de prueba temporales
-test_output.txt
-output.txt
-resultado.txt
-
-# Archivos de configuración local
-config.local
-*.local
-
-# Archivos de documentación generada
-docs/html/
-docs/latex/
-*.pdf
-!README.pdf
