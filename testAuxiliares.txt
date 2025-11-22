@@ -1,3 +1,5 @@
+//  cd /c/Users/djxvi/OneDrive/Documentos/TEO_codes
+
 /*
  * test_logic.txt
  * Prueba de operadores logicos y booleanos.
