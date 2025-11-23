@@ -1,0 +1,70 @@
+/*
+ * 01_programa_completo.txt
+ * Programa de prueba robusto para codegen:
+ *  - declaraciones globales
+ *  - expresiones aritméticas y lógicas
+ *  - if / else
+ *  - bucles while, for, do-while
+ *  - uso de funciones reservadas:
+ *      mover(int), girarIzq(int), girarDer(int), reversa(int),
+ *      leerSensor(), parar()
+ */
+
+// Declaraciones globales
+int g_dist = 5;
+boolean g_obstaculo = false;
+int g_sensor = 0;
+int g_contador = 0;
+
+// Setup principal
+void setup() {
+    // Aritmética básica sobre globales
+    g_dist = g_dist * 2 + 10;   // g_dist = 20
+
+    // Lógica booleana
+    g_obstaculo = !g_obstaculo; // pasa a true
+
+    // Leer sensor y decidir
+    g_sensor = leerSensor();
+
+    if (g_sensor > 50 && g_obstaculo) {
+        // Avanza una distancia fija
+        mover(10);
+    } else {
+        // Gira a la derecha si no hay condición de avance
+        girarDer(90);
+    }
+
+    // Bucle while: consumir distancia restante moviendo de a 1
+    while (g_dist > 0) {
+        g_dist = g_dist - 1;
+        mover(1);
+    }
+
+    // Bucle for: pequeños giros a la izquierda
+    for (int i = 0; i < 3; i = i + 1) {
+        girarIzq(45);
+        g_contador = g_contador + 1;
+    }
+
+    // Bucle do-while: reversa controlada
+    int pasos_reversa = 0;
+    do {
+        reversa(5);
+        pasos_reversa = pasos_reversa + 1;
+    } while (pasos_reversa < 2);
+
+    // Detener el carro al final
+    parar();
+}
+
+// Función de usuario no utilizada por la VM (solo para validar gramática/semántico)
+void mi_funcion(int p, string msg) {
+    boolean flag = true;
+
+    if (p >= 0) {
+        flag = false;
+    }
+}
+
+

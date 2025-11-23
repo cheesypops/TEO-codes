@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include "../ast/ast.h"
 #include "../semantic/semantic.h"
+#include "../codegen/codegen.h"
 
 /* Función generada por Bison - parsea la entrada y construye el AST */
 extern int yyparse(void);
@@ -60,8 +61,26 @@ int main(int argc, char *argv[]) {
     
     /* FASE 2: Análisis Semántico */
     /* Verificación de tipos, validación de símbolos, gestión de ámbitos */
-    analizar_semantica(raiz_ast);
-    
+    int exito_semantico = analizar_semantica(raiz_ast);
+
+    if (!exito_semantico) {
+        fprintf(stderr, "Analisis semantico fallido. No se generara bytecode.\n");
+        liberar_arbol(raiz_ast);
+        return 1;
+    }
+
+    /* FASE 3: Generación de Bytecode (.vmcode) */
+    FILE *out = fopen("program.vmcode", "w");
+    if (!out) {
+        fprintf(stderr, "Error: No se pudo abrir el archivo de salida 'program.vmcode'\n");
+        liberar_arbol(raiz_ast);
+        return 1;
+    }
+
+    printf("\n--- Generando bytecode en 'program.vmcode' ---\n");
+    generar_bytecode(raiz_ast, out);
+    fclose(out);
+
     /* Liberar memoria del AST */
     liberar_arbol(raiz_ast);
     return 0;

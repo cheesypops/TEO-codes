@@ -4,7 +4,7 @@
 # Nombre del compilador C
 CC = gcc
 # Opciones del compilador (g = símbolos de depuración)
-CFLAGS = -g -Wall -Wno-unused-function -Isrc/ast -Isrc/parser -Isrc/lexer -Isrc/semantic
+CFLAGS = -g -Wall -Wno-unused-function -Isrc/ast -Isrc/parser -Isrc/lexer -Isrc/semantic -Isrc/codegen
 
 # Nombres de los ejecutables de Flex y Bison
 FLEX = flex
@@ -19,12 +19,14 @@ AST_DIR = $(SRC_DIR)/ast
 PARSER_DIR = $(SRC_DIR)/parser
 LEXER_DIR = $(SRC_DIR)/lexer
 SEMANTIC_DIR = $(SRC_DIR)/semantic
+CODEGEN_DIR = $(SRC_DIR)/codegen
 BUILD_DIR = build
 
 # Archivos fuente .c (sin los generados)
 SOURCES_C = $(SRC_DIR)/main.c \
             $(AST_DIR)/ast.c \
-            $(SEMANTIC_DIR)/semantic.c
+            $(SEMANTIC_DIR)/semantic.c \
+            $(CODEGEN_DIR)/codegen.c
 
 # Archivos generados por Bison y Flex
 PARSER_GEN = $(PARSER_DIR)/parser.tab.c $(PARSER_DIR)/parser.tab.h
@@ -36,12 +38,14 @@ SOURCES = $(SOURCES_C) $(PARSER_GEN:.h=.c) $(LEXER_GEN)
 # Archivos de cabecera .h
 HEADERS = $(AST_DIR)/ast.h \
           $(SEMANTIC_DIR)/semantic.h \
+          $(CODEGEN_DIR)/codegen.h \
           $(PARSER_DIR)/parser.tab.h
 
 # Archivos objeto .o (en el directorio build)
 OBJECTS = $(BUILD_DIR)/main.o \
           $(BUILD_DIR)/ast/ast.o \
           $(BUILD_DIR)/semantic/semantic.o \
+          $(BUILD_DIR)/codegen/codegen.o \
           $(BUILD_DIR)/parser/parser.tab.o \
           $(BUILD_DIR)/lexer/lexer.yy.o
 
@@ -53,7 +57,7 @@ $(TARGET): $(OBJECTS) | $(BUILD_DIR)
 
 # Crear directorio build si no existe
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)/ast $(BUILD_DIR)/parser $(BUILD_DIR)/lexer $(BUILD_DIR)/semantic
+	mkdir -p $(BUILD_DIR)/ast $(BUILD_DIR)/parser $(BUILD_DIR)/lexer $(BUILD_DIR)/semantic $(BUILD_DIR)/codegen
 
 # Regla para generar el parser (de .y a .c y .h)
 # -d: genera el archivo .h (parser.tab.h)
@@ -74,6 +78,10 @@ $(BUILD_DIR)/ast/ast.o: $(AST_DIR)/ast.c $(HEADERS) | $(BUILD_DIR)
 
 # Regla específica para semantic.c
 $(BUILD_DIR)/semantic/semantic.o: $(SEMANTIC_DIR)/semantic.c $(HEADERS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Regla específica para codegen.c
+$(BUILD_DIR)/codegen/codegen.o: $(CODEGEN_DIR)/codegen.c $(HEADERS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Regla específica para parser.tab.c

@@ -1,0 +1,81 @@
+1. Nivel Superior
+
+Programa -> DeclaracionGlobal SetupDef FuncionDef
+
+DeclaracionGlobal -> DeclaracionGlobal Declaracion ;_token | DeclaracionGlobal Expresion ;_token | λ
+
+SetupDef -> Tipo setup_token (_token )_token Bloque
+
+2. Bloques y Lista de Instrucciones
+
+Bloque -> inicio_token ListaInstrucciones fin_token
+
+ListaInstrucciones -> ListaInstrucciones Instruccion | λ (Sin cambios, ya era correcta)
+
+3. Instrucciones
+
+Instruccion -> Declaracion ;_token | Expresion ;_token | If | For | While | DoWhile | Bloque
+
+4. Sentencias Simples (Corregida)
+
+Declaracion -> Tipo ListaDeclaradores
+
+ListaDeclaradores -> ListaDeclaradores ,_token Declarador | Declarador (Recursiva por la izquierda)
+
+Declarador -> id_token DeclaracionInit
+
+DeclaracionInit -> =_token Expresion | λ (Nota: Declaracion' y Declarador se fusionaron)
+
+5. Estructuras de Control
+
+If -> if_token (_token Expresion )_token Bloque If’
+
+If’ -> else_token Bloque | λ (No ambigua)
+
+For -> for_token (_token ForInit ;_token ExpresionLogicaFor ;_token ForStep )_token Bloque
+
+ForInit -> Declaracion | Expresion | λ (No ambigua, ya que Declaracion inicia con Tipo y Expresion no)
+
+ExpresionLogicaFor -> Expresion | λ
+
+ForStep -> Expresion | λ
+
+DoWhile -> do_token inicio_token Bloque fin_token while_token (_token Expresion )_token ;_token
+
+While -> while_token (_token Expresion )_token Bloque
+
+6. Definición de Funciones y Tipos (Corregida)
+
+FuncionDef -> TipoRetorno id_token (_token ListaParametros )_token Bloque
+
+ListaParametros -> ListaParametros ,_token Parametro | Parametro | λ (Recursiva por la izquierda)
+
+Parametro -> Tipo id_token
+
+TipoRetorno -> void_token | Tipo
+
+Tipo -> tipo_token (Tu GIC original asume que int, float, etc., son un solo tipo_token)
+
+7. Lista de Argumentos (Corregida)
+
+ListaArgumentos -> ListaArgumentos ,_token Expresion | Expresion | λ (Recursiva por la izquierda)
+
+8. Jerarquía de Expresión (Reescritura Completa)
+
+(Nivel 1: Asignación. Asociativa-Derecha) Expresion -> ExpLogicaOr =_token Expresion | ExpLogicaOr
+
+(Nivel 2: OR. Asociativa-Izquierda) ExpLogicaOr -> ExpLogicaOr ||_token ExpLogicaAnd | ExpLogicaAnd
+
+(Nivel 3: AND. Asociativa-Izquierda) ExpLogicaAnd -> ExpLogicaAnd &&_token ExpComparacion | ExpComparacion
+
+(Nivel 4: Comparación. Asociativa-Izquierda, como pediste) ExpComparacion -> ExpComparacion ==_token ExpAditiva | ExpComparacion !=_token ExpAditiva | ExpComparacion <_token ExpAditiva | ExpComparacion <=_token ExpAditiva | ExpComparacion >_token ExpAditiva | ExpComparacion >=_token ExpAditiva | ExpAditiva
+
+(Nivel 5: Adición/Sustracción. Asociativa-Izquierda) ExpAditiva -> ExpAditiva +_token ExpMultiplicativa | ExpAditiva -_token ExpMultiplicativa | ExpMultiplicativa
+
+(Nivel 6: Multiplicación/División. Asociativa-Izquierda) ExpMultiplicativa -> ExpMultiplicativa *_token ExpUnaria | ExpMultiplicativa /_token ExpUnaria | ExpMultiplicativa %_token ExpUnaria | ExpUnaria
+
+(Nivel 7: Prefijos Unarios. Asociativa-Derecha) ExpUnaria -> !_token ExpUnaria | -_token ExpUnaria | +_token ExpUnaria | ++_token ExpUnaria | --_token ExpUnaria | ExpPostfija
+
+(Nivel 8: Postfijos y Primarios. Asociativa-Izquierda) ExpPostfija -> ExpPrimaria | ExpPostfija (_token ListaArgumentos )_token | ExpPostfija [_token Expresion ]_token | ExpPostfija ++_token | ExpPostfija --_token
+
+(Nivel 9: Base) ExpPrimaria -> id_token | numero_token | cadena_token | true_token | false_token ExpPrimaria -> (_token Expresion )_token ExpPrimaria -> mover_token | girarIzq_token | girarDer_token | leerSensor_token | parar_token | reversa_token

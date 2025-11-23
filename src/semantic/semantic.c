@@ -35,6 +35,9 @@ Simbolo tabla_simbolos[MAX_SIMBOLOS];
 int num_simbolos = 0;
 int ambito_actual = 0;  /* Nivel de ámbito actual (0 = ámbito global) */
 
+/* Índice incremental para mapear variables (y parámetros) al arreglo vars[] de la VM. */
+static int siguiente_indice_vm = 0;
+
 Simbolo* ts_buscar_en_ambito_actual(char* nombre);
 
 /* ========== Operaciones sobre la Tabla de Símbolos ========== */
@@ -151,6 +154,12 @@ int ts_insertar(char* nombre, TipoDato tipo, int linea, ASTNode* params) {
     tabla_simbolos[num_simbolos].ambito = ambito_actual;
     tabla_simbolos[num_simbolos].linea = linea;
     tabla_simbolos[num_simbolos].parametros = params;
+    /* Asignar índice de VM solo a variables/parámetros (no a funciones). */
+    if (params == NULL) {
+        tabla_simbolos[num_simbolos].indice_vm = siguiente_indice_vm++;
+    } else {
+        tabla_simbolos[num_simbolos].indice_vm = -1;
+    }
     
     printf("[Semantico: Declarado '%s' (tipo %d) en ambito %d]\n", nombre, tipo, ambito_actual);
     
@@ -172,6 +181,7 @@ void ts_liberar() {
         }
     }
     num_simbolos = 0;
+    siguiente_indice_vm = 0;
 }
 
 /* ========== Prototipos de Funciones Recorredoras ========== */
@@ -402,9 +412,24 @@ int analizar_semantica(ASTNode* raiz) {
     analizar_cuerpos(raiz);
     
     printf("\n--- Fin del Analisis Semantico ---\n");
-    
-    ts_liberar();
+
+    /* No liberamos la tabla de símbolos aquí para permitir que fases
+     * posteriores (como codegen) reutilicen la información de variables.
+     * El proceso termina poco después, por lo que el impacto en memoria
+     * es aceptable para el alcance del proyecto.
+     */
     return 1;
+}
+
+int ts_obtener_indice_variable(const char* nombre) {
+    if (!nombre) return -1;
+    Simbolo* sym = ts_buscar((char*)nombre);
+    if (!sym) return -1;
+    /* Solo consideramos variables/parámetros (no funciones). */
+    if (sym->parametros != NULL) {
+        return -1;
+    }
+    return sym->indice_vm;
 }
 
 /**
@@ -681,12 +706,12 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                     fprintf(stderr, "Error Semantico (linea %d): Funcion '%s' no declarada.\n", nodo->linea, nombre_func);
                     return TIPO_DESCONOCIDO;
                 }
-
+            
                 /* Comparar parámetros formales con argumentos reales */
                 ASTNode* param = sym->parametros;  /* Lista de parámetros esperados (de la TS) */
                 ASTNode* arg = nodo->hijo2;        /* Lista de argumentos dados (del AST) */
                 int arg_count = 0;
-
+            
                 /* Verificar tipos de argumentos uno por uno */
                 while ((param && param->tipo != NODO_VACIO) && (arg && arg->tipo != NODO_VACIO)) {
                     arg_count++;
@@ -694,7 +719,7 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                     /* param es un NODO_DECLARACION (hijo1=Tipo, hijo2=ID) */
                     TipoDato tipo_param = param->hijo1->data.tipo_dato;
                     TipoDato tipo_arg = analizar_expresion(arg);
-
+            
                     /* Verificar compatibilidad de tipos */
                     if (tipo_param != tipo_arg) {
                         /* Permitir conversión implícita de INT a FLOAT */
@@ -705,11 +730,11 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                                     arg->linea, arg_count, nombre_func, tipo_param, tipo_arg);
                         }
                     }
-
+            
                     param = param->siguiente;
                     arg = arg->siguiente;
                 }
-
+            
                 /* Verificar número de argumentos */
                 if ((param && param->tipo != NODO_VACIO) && (!arg || arg->tipo == NODO_VACIO)) {
                     fprintf(stderr, "Error Semantico (linea %d): No hay suficientes argumentos para la funcion '%s'.\n", nodo->linea, nombre_func);
@@ -723,26 +748,57 @@ TipoDato analizar_expresion(ASTNode* nodo) {
             } else if (callee->tipo == NODO_FUNCION_RESERVADA) {
                 char* nombre_func = callee->data.cadena;
                 printf("[Fase 2: Analizando llamada a func reservada '%s']\n", nombre_func);
-                
-                /* Funciones reservadas sin argumentos que retornan void */
-                if (strcmp(nombre_func, "parar") == 0 ||
-                    strcmp(nombre_func, "mover") == 0 ||
-                    strcmp(nombre_func, "girarIzq") == 0 ||
-                    strcmp(nombre_func, "girarDer") == 0 ||
-                    strcmp(nombre_func, "reversa") == 0) 
-                {
-                    if (nodo->hijo2->tipo != NODO_VACIO) {
-                         fprintf(stderr, "Error Semantico (linea %d): '%s()' no toma argumentos.\n", nodo->linea, nombre_func);
+
+                ASTNode* arg = nodo->hijo2;
+
+                /* Función reservada leerSensor(): sin argumentos, retorna int */
+                if (strcmp(nombre_func, "leerSensor") == 0) {
+                    if (arg && arg->tipo != NODO_VACIO) {
+                        fprintf(stderr, "Error Semantico (linea %d): '%s()' no toma argumentos.\n", nodo->linea, nombre_func);
+                    }
+                    return TIPO_INT;
+                }
+
+                /* Función reservada parar(): sin argumentos, retorna void */
+                if (strcmp(nombre_func, "parar") == 0) {
+                    if (arg && arg->tipo != NODO_VACIO) {
+                        fprintf(stderr, "Error Semantico (linea %d): '%s()' no toma argumentos.\n", nodo->linea, nombre_func);
                     }
                     return TIPO_VOID;
                 }
-                
-                /* Función reservada leerSensor(): sin argumentos, retorna int */
-                if (strcmp(nombre_func, "leerSensor") == 0) {
-                     if (nodo->hijo2->tipo != NODO_VACIO) {
-                         fprintf(stderr, "Error Semantico (linea %d): '%s()' no toma argumentos.\n", nodo->linea, nombre_func);
+
+                /* Funciones reservadas de movimiento con UN argumento entero:
+                 *   mover(int)
+                 *   girarIzq(int)
+                 *   girarDer(int)
+                 *   reversa(int)
+                 */
+                if (strcmp(nombre_func, "mover") == 0 ||
+                    strcmp(nombre_func, "girarIzq") == 0 ||
+                    strcmp(nombre_func, "girarDer") == 0 ||
+                    strcmp(nombre_func, "reversa") == 0) {
+
+                    /* Debe haber exactamente un argumento. */
+                    if (!arg || arg->tipo == NODO_VACIO) {
+                        fprintf(stderr, "Error Semantico (linea %d): '%s()' requiere un argumento entero.\n",
+                                nodo->linea, nombre_func);
+                        return TIPO_VOID;
                     }
-                    return TIPO_INT;
+
+                    /* Analizar el primer argumento y comprobar que es entero. */
+                    TipoDato tipo_arg = analizar_expresion(arg);
+                    if (tipo_arg != TIPO_INT) {
+                        fprintf(stderr, "Error Semantico (linea %d): El argumento de '%s()' debe ser entero (TIPO_INT).\n",
+                                arg->linea, nombre_func);
+                    }
+
+                    /* Verificar que no haya más argumentos en la lista. */
+                    if (arg->siguiente && arg->siguiente->tipo != NODO_VACIO) {
+                        fprintf(stderr, "Error Semantico (linea %d): '%s()' solo acepta un argumento.\n",
+                                nodo->linea, nombre_func);
+                    }
+
+                    return TIPO_VOID;
                 }
                 
                 return TIPO_DESCONOCIDO;
