@@ -1,43 +1,55 @@
 /*
- * test_logic.txt
- * Prueba de operadores logicos y booleanos.
+ * test_contador_fix.txt
+ * Solucion al problema de conteo rapido.
  */
 
 // 1. Declaraciones Globales
-int g_valor = 10;
-boolean g_interruptor = false;
-float g_limite = 15.5;
+int contador = 0;
+boolean buscando = true;
+int lectura = 0;
+int temp = 0; // Variable temporal para el bucle de espera
 
 // 2. Definicion de Setup
 void setup() {
     
-    // Asignacion y logica NOT
-    g_interruptor = !g_interruptor; // Ahora es 'true'
-    
-    // Prueba de IF / ELSE IF / ELSE
-    if (g_valor < 5 || !g_interruptor) {
-        // No deberia entrar aqui
+    while (buscando) {
+        
         mover();
-    } else {
-        // No deberia entrar aqui
-        parar();
+        lectura = leerSensor();
+        
+        // Si detectamos linea negra (cualquier sensor)...
+        if (lectura != 0) {
+            
+            // 1. Contamos ESTA linea
+            contador = contador + 1;
+            
+            // 2. TRUCO: "Esperar a que salga de la linea"
+            // Mientras siga leyendo negro (lectura != 0), seguimos avanzando
+            // pero NO volvemos a contar.
+            
+            // Inicializamos con valor negro para entrar al bucle
+            temp = 1; 
+            
+            while (temp != 0) {
+                // Seguimos moviendo el carro para que cruce la linea
+                mover();
+                
+                // Leemos de nuevo. Si ya es blanco (0), temp sera 0
+                // y saldremos de este bucle de espera.
+                temp = leerSensor();
+            }
+            
+            // Al llegar aqui, el sensor ya esta en blanco de nuevo.
+            // Estamos listos para buscar la SIGUIENTE linea.
+        }
+        
+        // Verificar si terminamos
+        if (contador >= 5) {
+            buscando = false;
+        }
     }
     
-    // Prueba de WHILE con boolean
-    while (g_interruptor) {
-        g_interruptor = false;
-        girarIzq();
-    }
-    
-    // g_valor deberia ser 100 al final
+    parar();
 }
 
-// 3. Definicion de Funcion
-void mi_funcion(int param1, string param2) {
-    // Declaracion local
-    boolean local_check = true;
-    
-    if (param1 > 10) {
-        local_check = false;
-    }
-}
+void nada() {}

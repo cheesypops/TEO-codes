@@ -67,6 +67,7 @@ COMENT_BLOQ "/*"([^*]|(\*+[^*/]))*\*+"/"
 "leerSensor" { return LEERSENSOR_TOKEN; } 
 "parar"      { return PARAR_TOKEN; }      
 "reversa"    { return REVERSA_TOKEN; }    
+"esperar"    { return ESPERAR_TOKEN; }
 
 "true"      { yylval.booleano = 1; return TRUE_TOKEN; }
 "false"     { yylval.booleano = 0; return FALSE_TOKEN; }

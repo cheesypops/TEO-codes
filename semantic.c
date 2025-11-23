@@ -610,6 +610,25 @@ TipoDato analizar_expresion(ASTNode* nodo) {
                     }
                     return TIPO_VOID;
                 }
+
+                if (strcmp(nombre_func, "esperar") == 0) {
+                     // 1. Verificar que tenga argumentos
+                     if (nodo->hijo2->tipo == NODO_VACIO) {
+                         fprintf(stderr, "Error Semantico (linea %d): 'esperar()' requiere 1 argumento (milisegundos).\n", nodo->linea);
+                         return TIPO_VOID;
+                     }
+                     
+                     // 2. Verificar que solo tenga 1 argumento (hijo2->siguiente debe ser NULL o Vacio)
+                     // (Simplificado: validamos el primero)
+                     
+                     // 3. Validar tipo del argumento
+                     TipoDato tipo_arg = analizar_expresion(nodo->hijo2); // Primer argumento
+                     if (tipo_arg != TIPO_INT && tipo_arg != TIPO_FLOAT) {
+                         fprintf(stderr, "Error Semantico (linea %d): 'esperar()' requiere un numero entero (milisegundos).\n", nodo->linea);
+                     }
+                     
+                     return TIPO_VOID; // No devuelve valor
+                }
                 
                 if (strcmp(nombre_func, "leerSensor") == 0) {
                      if (nodo->hijo2->tipo != NODO_VACIO) {

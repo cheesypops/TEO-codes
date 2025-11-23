@@ -144,3 +144,59 @@ void mi_funcion(int param1, string param2) {
     // Asignacion
     msg = param2;
 }
+--------------------------------------------------------------------------------
+/*
+ * test_contador_fix.txt
+ * Solucion al problema de conteo rapido.
+ */
+
+// 1. Declaraciones Globales
+int contador = 0;
+boolean buscando = true;
+int lectura = 0;
+int temp = 0; // Variable temporal para el bucle de espera
+
+// 2. Definicion de Setup
+void setup() {
+    
+    while (buscando) {
+        
+        mover();
+        lectura = leerSensor();
+        
+        // Si detectamos linea negra (cualquier sensor)...
+        if (lectura != 0) {
+            
+            // 1. Contamos ESTA linea
+            contador = contador + 1;
+            
+            // 2. TRUCO: "Esperar a que salga de la linea"
+            // Mientras siga leyendo negro (lectura != 0), seguimos avanzando
+            // pero NO volvemos a contar.
+            
+            // Inicializamos con valor negro para entrar al bucle
+            temp = 1; 
+            
+            while (temp != 0) {
+                // Seguimos moviendo el carro para que cruce la linea
+                mover();
+                
+                // Leemos de nuevo. Si ya es blanco (0), temp sera 0
+                // y saldremos de este bucle de espera.
+                temp = leerSensor();
+            }
+            
+            // Al llegar aqui, el sensor ya esta en blanco de nuevo.
+            // Estamos listos para buscar la SIGUIENTE linea.
+        }
+        
+        // Verificar si terminamos
+        if (contador >= 5) {
+            buscando = false;
+        }
+    }
+    
+    parar();
+}
+
+void nada() {}

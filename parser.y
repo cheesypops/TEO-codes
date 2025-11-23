@@ -29,7 +29,7 @@ ASTNode *raiz_ast = NULL; // Raíz del árbol completo
 %token TIPO_TOKEN_INT TIPO_TOKEN_BOOLEAN TIPO_TOKEN_FLOAT TIPO_TOKEN_CHAR TIPO_TOKEN_STRING
 %token IF_TOKEN ELSE_TOKEN FOR_TOKEN WHILE_TOKEN DO_TOKEN VOID_TOKEN
 %token SETUP_TOKEN
-%token MOVER_TOKEN GIRARIZQ_TOKEN GIRARDER_TOKEN LEERSENSOR_TOKEN PARAR_TOKEN REVERSA_TOKEN
+%token MOVER_TOKEN GIRARIZQ_TOKEN GIRARDER_TOKEN LEERSENSOR_TOKEN PARAR_TOKEN REVERSA_TOKEN ESPERAR_TOKEN
 %token INICIO_TOKEN FIN_TOKEN
 %token PAREN_IZQ_TOKEN PAREN_DER_TOKEN
 %token CORCH_IZQ_TOKEN CORCH_DER_TOKEN
@@ -517,6 +517,8 @@ ExpPrimaria
         { $$ = crear_nodo_funcion_reservada("parar", @1.first_line); }
     | REVERSA_TOKEN
         { $$ = crear_nodo_funcion_reservada("reversa", @1.first_line); }
+    | ESPERAR_TOKEN
+        { $$ = crear_nodo_funcion_reservada("esperar", @1.first_line); }
     ;
 %%
 
