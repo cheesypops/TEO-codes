@@ -200,3 +200,60 @@ void setup() {
 }
 
 void nada() {}
+
+------------------------------SEGUIDOR DE LINEAS--------------------------
+/*
+ * seguidor_linea.txt
+ * Implementación del algoritmo de seguimiento de línea
+ * adaptado a la Máquina Virtual.
+ */
+
+// 1. Declaraciones Globales
+boolean encendido = true;
+int estado = 0;
+
+// 2. Definicion de Setup
+void setup() {
+    
+    // Bucle infinito (simula el void loop() de Arduino)
+    while (encendido) {
+        
+        // Leemos el estado de los sensores
+        // 0: Blanco/Blanco (Avanzar)
+        // 1: Izq Negro / Der Blanco (Corregir a Izquierda)
+        // 2: Izq Blanco / Der Negro (Corregir a Derecha)
+        // 3: Negro/Negro (Parar)
+        estado = leerSensor();
+        
+        // Caso 1: Ambos en blanco -> Avanzar recto
+        if (estado == 0) {
+            mover();
+        }
+        
+        // Caso 2: Sensor Izquierdo ve negro -> Girar Izquierda
+        if (estado == 1) {
+            girarIzq();
+        }
+        
+        // Caso 3: Sensor Derecho ve negro -> Girar Derecha
+        if (estado == 2) {
+            girarDer();
+        }
+        
+        // Caso 4: Ambos ven negro -> Detenerse
+        if (estado == 3) {
+            parar();
+            // Opcional: Si quieres que el programa termine aqui:
+            // encendido = false;
+        }
+        
+        // Pequeña espera para estabilidad mecánica (50ms)
+        esperar(50);
+    }
+    
+    parar();
+}
+
+// 3. Funcion auxiliar
+void nada() {
+}

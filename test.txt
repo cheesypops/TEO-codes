@@ -1,55 +1,55 @@
 /*
- * test_contador_fix.txt
- * Solucion al problema de conteo rapido.
+ * seguidor_linea.txt
+ * Implementación del algoritmo de seguimiento de línea
+ * adaptado a la Máquina Virtual.
  */
 
 // 1. Declaraciones Globales
-int contador = 0;
-boolean buscando = true;
-int lectura = 0;
-int temp = 0; // Variable temporal para el bucle de espera
+boolean encendido = true;
+int estado = 0;
 
 // 2. Definicion de Setup
 void setup() {
     
-    while (buscando) {
+    // Bucle infinito (simula el void loop() de Arduino)
+    while (encendido) {
         
-        mover();
-        lectura = leerSensor();
+        // Leemos el estado de los sensores
+        // 0: Blanco/Blanco (Avanzar)
+        // 1: Izq Negro / Der Blanco (Corregir a Izquierda)
+        // 2: Izq Blanco / Der Negro (Corregir a Derecha)
+        // 3: Negro/Negro (Parar)
+        estado = leerSensor();
         
-        // Si detectamos linea negra (cualquier sensor)...
-        if (lectura != 0) {
-            
-            // 1. Contamos ESTA linea
-            contador = contador + 1;
-            
-            // 2. TRUCO: "Esperar a que salga de la linea"
-            // Mientras siga leyendo negro (lectura != 0), seguimos avanzando
-            // pero NO volvemos a contar.
-            
-            // Inicializamos con valor negro para entrar al bucle
-            temp = 1; 
-            
-            while (temp != 0) {
-                // Seguimos moviendo el carro para que cruce la linea
-                mover();
-                
-                // Leemos de nuevo. Si ya es blanco (0), temp sera 0
-                // y saldremos de este bucle de espera.
-                temp = leerSensor();
-            }
-            
-            // Al llegar aqui, el sensor ya esta en blanco de nuevo.
-            // Estamos listos para buscar la SIGUIENTE linea.
+        // Caso 1: Ambos en blanco -> Avanzar recto
+        if (estado == 0) {
+            mover();
         }
         
-        // Verificar si terminamos
-        if (contador >= 5) {
-            buscando = false;
+        // Caso 2: Sensor Izquierdo ve negro -> Girar Izquierda
+        if (estado == 1) {
+            girarIzq();
         }
+        
+        // Caso 3: Sensor Derecho ve negro -> Girar Derecha
+        if (estado == 2) {
+            girarDer();
+        }
+        
+        // Caso 4: Ambos ven negro -> Detenerse
+        if (estado == 3) {
+            parar();
+            // Opcional: Si quieres que el programa termine aqui:
+            // encendido = false;
+        }
+        
+        // Pequeña espera para estabilidad mecánica (50ms)
+        esperar(50);
     }
     
     parar();
 }
 
-void nada() {}
+// 3. Funcion auxiliar
+void nada() {
+}
