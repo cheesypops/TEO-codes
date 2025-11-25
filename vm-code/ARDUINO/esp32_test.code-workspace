@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../esp32_test"
+		},
+		{
+			"name": "ARDUINO",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
