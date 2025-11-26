@@ -1,0 +1,141 @@
+/* ==========================================
+   GRAMÁTICA DEL LENGUAJE (GIC)
+   ========================================== */
+
+/* 1. NIVEL SUPERIOR */
+Programa            -> DeclaracionGlobal SetupDef FuncionDef
+
+DeclaracionGlobal   -> DeclaracionGlobal Declaracion ';'
+                     | DeclaracionGlobal Expresion ';'
+                     | ε
+
+SetupDef            -> 'void' 'setup' '(' ')' Bloque
+
+FuncionDef          -> TipoRetorno 'id' '(' ListaParametros ')' Bloque
+
+/* 2. BLOQUES E INSTRUCCIONES */
+Bloque              -> '{' ListaInstrucciones '}'
+
+ListaInstrucciones  -> ListaInstrucciones Instruccion
+                     | ε
+
+Instruccion         -> Declaracion ';'
+                     | Expresion ';'
+                     | If
+                     | For
+                     | While
+                     | DoWhile
+                     | Bloque
+
+/* 3. DECLARACIONES */
+Declaracion         -> Tipo ListaDeclaradores
+
+ListaDeclaradores   -> Declarador
+                     | ListaDeclaradores ',' Declarador
+
+Declarador          -> 'id' DeclaracionInit
+
+DeclaracionInit     -> '=' Expresion
+                     | ε
+
+/* 4. ESTRUCTURAS DE CONTROL */
+If                  -> 'if' '(' Expresion ')' Bloque IfPrima
+IfPrima             -> 'else' Bloque
+                     | ε
+
+For                 -> 'for' '(' ForInit ';' ExpresionLogicaFor ';' ForStep ')' Bloque
+ForInit             -> Declaracion
+                     | Expresion
+                     | ε
+ExpresionLogicaFor  -> Expresion
+                     | ε
+ForStep             -> Expresion
+                     | ε
+
+While               -> 'while' '(' Expresion ')' Bloque
+
+DoWhile             -> 'do' '{' Bloque '}' 'while' '(' Expresion ')' ';'
+
+/* 5. TIPOS Y PARÁMETROS */
+TipoRetorno         -> 'void' | Tipo
+
+Tipo                -> 'int' | 'boolean' | 'float' | 'char' | 'string'
+
+ListaParametros     -> ListaParametrosCont
+                     | ε
+ListaParametrosCont -> Parametro
+                     | ListaParametrosCont ',' Parametro
+
+Parametro           -> Tipo 'id'
+
+/* 6. JERARQUÍA DE EXPRESIONES (Precedencia Explícita) */
+
+/* Nivel 1: Asignación (Asociativa Derecha) */
+Expresion           -> ExpLogicaOr '=' Expresion
+                     | ExpLogicaOr
+
+/* Nivel 2: Lógico OR */
+ExpLogicaOr         -> ExpLogicaOr '||' ExpLogicaAnd
+                     | ExpLogicaAnd
+
+/* Nivel 3: Lógico AND */
+ExpLogicaAnd        -> ExpLogicaAnd '&&' ExpComparacion
+                     | ExpComparacion
+
+/* Nivel 4: Comparación */
+ExpComparacion      -> ExpComparacion '==' ExpAditiva
+                     | ExpComparacion '!=' ExpAditiva
+                     | ExpComparacion '<'  ExpAditiva
+                     | ExpComparacion '<=' ExpAditiva
+                     | ExpComparacion '>'  ExpAditiva
+                     | ExpComparacion '>=' ExpAditiva
+                     | ExpAditiva
+
+/* Nivel 5: Aritmética Aditiva */
+ExpAditiva          -> ExpAditiva '+' ExpMultiplicativa
+                     | ExpAditiva '-' ExpMultiplicativa
+                     | ExpMultiplicativa
+
+/* Nivel 6: Aritmética Multiplicativa */
+ExpMultiplicativa   -> ExpMultiplicativa '*' ExpUnaria
+                     | ExpMultiplicativa '/' ExpUnaria
+                     | ExpMultiplicativa '%' ExpUnaria
+                     | ExpUnaria
+
+/* Nivel 7: Unarios Prefijos (Asociativa Derecha) */
+ExpUnaria           -> '!' ExpUnaria
+                     | '-' ExpUnaria
+                     | '+' ExpUnaria
+                     | '++' ExpUnaria
+                     | '--' ExpUnaria
+                     | ExpPostfija
+
+/* Nivel 8: Postfijos (Llamadas, Arrays, Incremento) */
+ExpPostfija         -> ExpPrimaria
+                     | ExpPostfija '(' ListaArgumentos ')'
+                     | ExpPostfija '[' Expresion ']'
+                     | ExpPostfija '++'
+                     | ExpPostfija '--'
+
+/* Nivel 9: Primarios (Base) */
+ExpPrimaria         -> 'id'
+                     | 'numero'
+                     | 'cadena'
+                     | 'true'
+                     | 'false'
+                     | '(' Expresion ')'
+                     | FuncReservada
+
+/* 7. ARGUMENTOS Y FUNCIONES RESERVADAS */
+ListaArgumentos     -> ListaArgumentosCont
+                     | ε
+ListaArgumentosCont -> Expresion
+                     | ListaArgumentosCont ',' Expresion
+
+FuncReservada       -> 'mover'
+                     | 'girarIzq'
+                     | 'girarDer'
+                     | 'leerSensor'
+                     | 'parar'
+                     | 'reversa'
+                     | 'esperar'
