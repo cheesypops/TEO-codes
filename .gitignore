@@ -73,3 +73,8 @@ docs/html/
 docs/latex/
 *.pdf
 !README.pdf
+
+# IDEs
+.vscode/
+.idea/
+.cursor/
