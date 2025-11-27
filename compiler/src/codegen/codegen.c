@@ -34,16 +34,36 @@ const char* OP_NAMES[] = {
  * Indica cuántos operandos enteros acompaña a cada instrucción en el flujo de bytecode.
  */
 const int OP_ARGS[] = {
-    0, // HALT
-    1, 1, 1, // CONST, LOAD, STORE
-    0, 0, 0, 0, 0, // Aritmética
-    0, 0, 0, // Unarios
-    0, 0, 0, // Lógica
-    0, 0, 0, 0, 0, 0, // Comparación
-    1, 1, // JMP, JZ
-    0, 0, 0, // MOVER, GIRAR_IZQ, GIRAR_DER
-    0, 0, 0, // LEER_SENSOR, PARAR, REVERSA
-    0        // DELAY (argumento leído desde la pila)
+    0, //  0: HALT
+    1, //  1: CONST
+    1, //  2: LOAD
+    1, //  3: STORE
+    0, //  4: ADD
+    0, //  5: SUB
+    0, //  6: MUL
+    0, //  7: DIV
+    0, //  8: MOD
+    0, //  9: INC
+    0, // 10: DEC
+    0, // 11: NEG
+    0, // 12: AND
+    0, // 13: OR
+    0, // 14: NOT
+    0, // 15: EQ
+    0, // 16: NEQ
+    0, // 17: GT
+    0, // 18: LT
+    0, // 19: GTE
+    0, // 20: LTE
+    1, // 21: JMP
+    1, // 22: JZ
+    0, // 23: MOVER
+    0, // 24: GIRAR_IZQ
+    0, // 25: GIRAR_DER
+    0, // 26: LEER_SENSOR
+    0, // 27: PARAR
+    0, // 28: REVERSA
+    0  // 29: DELAY (argumento leído desde la pila)
 };
 
 /* 4. FUNCIONES DE EMISIÓN (INT)
@@ -69,8 +89,13 @@ void patch(int direccion, int valor) {
 void generar_nodo(ASTNode* nodo) {
     if (!nodo || nodo->tipo == NODO_VACIO) return;
 
+    /* Trazas de depuración para aislar fallos en generación de código.
+     * Se deja el tipo numérico del nodo para no acoplarse a los enum.
+     */
+    printf("[CodeGen] entrar nodo tipo=%d pc=%d\n", nodo->tipo, pc);
+
     switch (nodo->tipo) {
-        case NODO_PROGRAMA:
+        case NODO_PROGRAMA: {
             // 1. Genera inicializaciones y expresiones globales.
             ASTNode* global = nodo->hijo1;
             while (global) {
@@ -86,6 +111,7 @@ void generar_nodo(ASTNode* nodo) {
                 func = func->siguiente;
             }
             break;
+        }
 
         case NODO_SETUP:
             generar_nodo(nodo->hijo2); 
@@ -104,13 +130,47 @@ void generar_nodo(ASTNode* nodo) {
         }
         
         case NODO_DECLARACION: {
-            ASTNode* decl = nodo->hijo2; 
-            while(decl) {
-                if (decl->hijo2->tipo != NODO_VACIO) {
-                    generar_nodo(decl->hijo2); 
-                    Simbolo* sym = ts_buscar(decl->hijo1->data.cadena);
-                    if (sym) { emit(OP_STORE); emit(sym->direccion); }
+            /* 
+             * Estructura asumida (en línea con 'parser.y' y 'semantic.c'):
+             *
+             *   - 'nodo' representa una sentencia de declaración completa:
+             *       Tipo ListaDeclaradores
+             *     donde:
+             *       nodo->hijo1 : NODO_TIPO (int, float, bool, ...)
+             *       nodo->hijo2 : lista enlazada de declaradores.
+             *
+             *   - Cada elemento 'decl' de esa lista es un nodo NODO_DECLARACION
+             *     creado por la regla 'Declarador':
+             *       decl->hijo1 : NODO_IDENTIFICADOR
+             *       decl->hijo2 : expresión de inicialización o NODO_VACIO.
+             *
+             *   - La lista termina en un posible nodo NODO_VACIO usado como
+             *     centinela (producido por las reglas ...2 -> lambda).
+             *
+             * Para cada variable con inicialización se genera:
+             *     <código de la expresión>
+             *     STORE <direccion_variable>
+             */
+            ASTNode* decl = nodo->hijo2;
+
+            while (decl && decl->tipo != NODO_VACIO) {
+                ASTNode* id   = decl->hijo1;
+                ASTNode* init = decl->hijo2;
+
+                if (id && id->tipo == NODO_IDENTIFICADOR &&
+                    init && init->tipo != NODO_VACIO) {
+                    
+                    /* Evalúa la expresión de inicialización en la pila. */
+                    generar_nodo(init);
+
+                    /* Emite el STORE sobre la dirección asociada al identificador. */
+                    Simbolo* sym = ts_buscar(id->data.cadena);
+                    if (sym) {
+                        emit(OP_STORE);
+                        emit(sym->direccion);
+                    }
                 }
+
                 decl = decl->siguiente;
             }
             break;
@@ -230,6 +290,8 @@ void generar_nodo(ASTNode* nodo) {
                     arg = arg->siguiente;
                 }
 
+                printf("[CodeGen] llamada reservada '%s' con %d args, pc=%d\n", func, arg_count, pc);
+
                 if (strcmp(func, "mover") == 0 ||
                     strcmp(func, "girarIzq") == 0 ||
                     strcmp(func, "girarDer") == 0 ||
@@ -281,9 +343,10 @@ void generar_codigo(ASTNode* raiz, const char* nombre_archivo) {
     }
     
     int i = 0;
+    int op_count = (int)(sizeof(OP_ARGS) / sizeof(OP_ARGS[0]));
     while (i < pc) {
         int opcode = code_buffer[i];
-        if (opcode < 0 || opcode > 29) break; // Finaliza si se encuentra un opcode fuera de rango.
+        if (opcode < 0 || opcode >= op_count) break; // Finaliza si se encuentra un opcode fuera de rango.
 
         fprintf(f, "%s", OP_NAMES[opcode]);
         
