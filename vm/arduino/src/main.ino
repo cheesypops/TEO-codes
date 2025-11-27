@@ -90,10 +90,10 @@ void detenerse()
 {
   digitalWrite(pinIN1, LOW);
   digitalWrite(pinIN2, LOW);
-  ledcWrite(canalPWM_A, 0);
+  ledcWrite(pinENA, 0);
   digitalWrite(pinIN3, LOW);
   digitalWrite(pinIN4, LOW);
-  ledcWrite(canalPWM_B, 0);
+  ledcWrite(pinENB, 0);
 }
 
 void avanzar()
@@ -110,20 +110,20 @@ void girarIzquierda()
 {
   digitalWrite(pinIN1, LOW);
   digitalWrite(pinIN2, LOW);
-  ledcWrite(canalPWM_A, 0);
+  ledcWrite(pinENA, 0);
   digitalWrite(pinIN3, HIGH);
   digitalWrite(pinIN4, LOW);
-  ledcWrite(canalPWM_B, velocidadGiro);
+  ledcWrite(pinENB, velocidadGiro);
 }
 
 void girarDerecha()
 {
   digitalWrite(pinIN1, HIGH);
   digitalWrite(pinIN2, LOW);
-  ledcWrite(canalPWM_A, velocidadGiro);
+  ledcWrite(pinENA, velocidadGiro);
   digitalWrite(pinIN3, LOW);
   digitalWrite(pinIN4, LOW);
-  ledcWrite(canalPWM_B, 0);
+  ledcWrite(pinENB, 0);
 }
 
 int leerSensores()
@@ -148,20 +148,20 @@ void avanzarConVelocidad(int vel)
 {
   digitalWrite(pinIN1, HIGH);
   digitalWrite(pinIN2, LOW);
-  ledcWrite(canalPWM_A, vel);
+  ledcWrite(pinENA, vel);
   digitalWrite(pinIN3, HIGH);
   digitalWrite(pinIN4, LOW);
-  ledcWrite(canalPWM_B, vel);
+  ledcWrite(pinENB, vel);
 }
 
 void reversaConVelocidad(int vel)
 {
   digitalWrite(pinIN1, LOW);
   digitalWrite(pinIN2, HIGH);
-  ledcWrite(canalPWM_A, vel);
+  ledcWrite(pinENA, vel);
   digitalWrite(pinIN3, LOW);
   digitalWrite(pinIN4, HIGH);
-  ledcWrite(canalPWM_B, vel);
+  ledcWrite(pinENB, vel);
 }
 
 /* ==========================================
@@ -566,10 +566,9 @@ void setup()
   pinMode(pinIN3, OUTPUT);
   pinMode(pinIN4, OUTPUT);
 
-  ledcSetup(canalPWM_A, freqPWM, resPWM);
-  ledcSetup(canalPWM_B, freqPWM, resPWM);
-  ledcAttachPin(pinENA, canalPWM_A);
-  ledcAttachPin(pinENB, canalPWM_B);
+  // ESP32 core 3.x: usar ledcAttach(pin, freq, res) en lugar de ledcSetup + ledcAttachPin
+  ledcAttach(pinENA, freqPWM, resPWM);
+  ledcAttach(pinENB, freqPWM, resPWM);
 
   detenerse();
   delay(1000);

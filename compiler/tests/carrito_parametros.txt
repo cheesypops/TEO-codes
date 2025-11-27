@@ -1,0 +1,35 @@
+// 1. Declaraciones globales
+int velRecta   = 300;
+int tiempoCorto = 500;   // ms
+int tiempoGiro  = 2000;   // ms
+
+// 2. Definición de setup
+void setup() {
+
+    // (1) Avance base sin parámetros (usa velocidadBase por defecto)
+    mover();
+    esperar(1000);   // sigue avanzando ~1s
+    parar();
+    esperar(500);    // queda quieto ~0.5s
+
+    // (2) Avance con velocidad explícita (un solo parámetro)
+    mover(velRecta); // avanza a velRecta indefinidamente
+    esperar(1000);   // ~1s a esa velocidad
+    parar();
+    esperar(500);    // pausa
+
+    // (3) Avance con velocidad y tiempo (dos parámetros)
+    mover(velRecta, tiempoCorto); // avanza velRecta durante tiempoCorto y se detiene solo
+    esperar(500);                 // pequeña pausa
+
+    // (4) Giro a la izquierda con tiempo (un parámetro)
+    girarIzq(tiempoGiro); // gira a la izquierda durante tiempoGiro y se detiene
+    esperar(500);         // pausa
+
+    // (5) Reversa con velocidad y tiempo (dos parámetros)
+    reversa(velRecta, tiempoCorto); // reversa velRecta durante tiempoCorto y se detiene
+    esperar(500);
+
+    // (6) Detención final
+    parar();
+}
