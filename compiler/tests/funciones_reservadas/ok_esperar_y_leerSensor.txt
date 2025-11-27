@@ -1,0 +1,48 @@
+/*
+ * ok_esperar_y_leerSensor.txt
+ * Pruebas de llamadas válidas a 'esperar(ms)' y 'leerSensor()'.
+ */
+
+// 1. Declaraciones Globales
+int estado;
+int contador = 0;
+boolean corriendo = true;
+
+// 2. Definicion de Setup
+void setup() {
+    
+    // Bucle sencillo que utiliza leerSensor() y esperar(ms)
+    // para simular iteraciones del seguidor de línea.
+    while (corriendo) {
+        
+        estado = leerSensor();  // llamada sin argumentos, retorna int.
+        
+        if (estado == 0) {
+            mover();
+        }
+        if (estado == 1) {
+            girarIzq(200);
+        }
+        if (estado == 2) {
+            girarDer(200);
+        }
+        if (estado == 3) {
+            parar();
+            corriendo = false;
+        }
+        
+        // Espera fija de 100 ms entre iteraciones.
+        esperar(100);
+        
+        contador = contador + 1;
+    }
+    
+    // Espera final antes de detenerse completamente.
+    esperar(50);
+    parar();
+}
+
+// 3. Funcion auxiliar requerida por la gramática
+void nada() {
+}
+

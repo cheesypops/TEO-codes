@@ -1,0 +1,36 @@
+// 1. Declaraciones globales
+int estado;
+int consecutivasNegras = 0;
+boolean corriendo = true;
+
+// 2. Definición de setup
+void setup() {
+
+    // Arranca avanzando recto a velRecta
+    mover();
+
+    while (corriendo) {
+
+        estado = leerSensor();   // 0,1,2,3
+
+        if (estado == 3) {
+            // Vimos negro (ambos sensores)
+            consecutivasNegras = consecutivasNegras + 1;
+
+            if (consecutivasNegras >= 4) {
+                // 4 negras SEGUIDAS → parar definitivamente
+                parar();
+                corriendo = false;
+            }
+        } else {
+            // Se rompió la racha → seguimos avanzando recto, contador a 0
+            consecutivasNegras = 0;
+            // no cambiamos dirección: ya va recto con mover()
+        }
+
+        esperar(100);   // pequeña espera entre lecturas
+    }
+
+    // Detención final por seguridad (por si acaso)
+    parar();
+}

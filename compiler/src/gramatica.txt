@@ -1,0 +1,105 @@
+/* 1. NIVEL SUPERIOR */
+Programa                -> DeclGlobalsOpt SetupDef ListaFunciones
+
+DeclGlobalsOpt          -> DeclGlobalItem DeclGlobalsOpt'
+DeclGlobalsOpt'         -> DeclGlobalItem DeclGlobalsOpt' | ε
+DeclGlobalItem          -> Declaracion ';'
+                         | Expresion ';'
+
+SetupDef                -> 'void' 'setup' '(' ')' Bloque
+
+ListaFunciones          -> FuncionDef ListaFunciones' | ε
+ListaFunciones'         -> FuncionDef ListaFunciones' | ε
+FuncionDef              -> TipoRetorno 'id' '(' ListaParametrosOpt ')' Bloque
+
+/* 2. BLOQUES E INSTRUCCIONES */
+Bloque                  -> '{' ListaInstrucciones '}'
+
+ListaInstrucciones      -> Instruccion ListaInstrucciones' | ε
+ListaInstrucciones'     -> Instruccion ListaInstrucciones' | ε
+
+Instruccion             -> Declaracion ';'
+                         | Expresion ';'
+                         | If
+                         | For
+                         | While
+                         | DoWhile
+                         | Bloque
+
+/* 3. DECLARACIONES */
+Declaracion             -> Tipo ListaDeclaradores
+
+ListaDeclaradores       -> Declarador ListaDeclaradores'
+ListaDeclaradores'      -> ',' Declarador ListaDeclaradores' | ε
+
+Declarador              -> 'id' DeclaracionInit
+DeclaracionInit         -> '=' Expresion | ε
+
+/* 4. TIPOS Y PARÁMETROS */
+TipoRetorno             -> 'void' | Tipo
+Tipo                    -> 'int' | 'boolean' | 'float' | 'char' | 'string'
+
+ListaParametrosOpt      -> Parametro ListaParametros' | ε
+ListaParametros'        -> ',' Parametro ListaParametros' | ε
+Parametro               -> Tipo 'id'
+
+/* 5. ESTRUCTURAS DE CONTROL */
+If                      -> 'if' '(' Expresion ')' Instruccion IfPrima
+IfPrima                 -> 'else' Instruccion | ε
+
+For                     -> 'for' '(' ForInit ';' ExpresionLogicaFor ';' ForStep ')' Bloque
+ForInit                 -> Declaracion | Expresion | ε
+ExpresionLogicaFor      -> Expresion | ε
+ForStep                 -> Expresion | ε
+
+While                   -> 'while' '(' Expresion ')' Bloque
+DoWhile                 -> 'do' Bloque 'while' '(' Expresion ')' ';'
+
+/* 6. JERARQUÍA DE EXPRESIONES (precedencia y asociatividad conservadas) */
+Expresion               -> ExpLogicaOr Expresion'
+Expresion'              -> '=' Expresion | ε              /* asignación derecha */
+
+ExpLogicaOr             -> ExpLogicaAnd ExpLogicaOr'
+ExpLogicaOr'            -> '||' ExpLogicaAnd ExpLogicaOr' | ε
+
+ExpLogicaAnd            -> ExpComparacion ExpLogicaAnd'
+ExpLogicaAnd'           -> '&&' ExpComparacion ExpLogicaAnd' | ε
+
+ExpComparacion          -> ExpAditiva ExpComparacion'
+ExpComparacion'         -> ('==' | '!=' | '<' | '<=' | '>' | '>=') ExpAditiva ExpComparacion' | ε
+
+ExpAditiva              -> ExpMultiplicativa ExpAditiva'
+ExpAditiva'             -> ('+' | '-') ExpMultiplicativa ExpAditiva' | ε
+
+ExpMultiplicativa       -> ExpUnaria ExpMultiplicativa'
+ExpMultiplicativa'      -> ('*' | '/' | '%') ExpUnaria ExpMultiplicativa' | ε
+
+ExpUnaria               -> ('!' | '-' | '+' | '++' | '--') ExpUnaria
+                         | ExpPostfija
+
+ExpPostfija             -> ExpPrimaria ExpPostfija'
+ExpPostfija'            -> '(' ListaArgumentosOpt ')' ExpPostfija'   /* llamada */
+                         | '[' Expresion ']' ExpPostfija'            /* indexación */
+                         | '++' ExpPostfija'                         /* post-inc */
+                         | '--' ExpPostfija'                         /* post-dec */
+                         | ε
+
+ExpPrimaria             -> 'id'
+                         | 'numero'
+                         | 'cadena'
+                         | 'true'
+                         | 'false'
+                         | '(' Expresion ')'
+                         | FuncReservada
+
+/* 7. ARGUMENTOS Y FUNCIONES RESERVADAS */
+ListaArgumentosOpt      -> Expresion ListaArgumentos' | ε
+ListaArgumentos'        -> ',' Expresion ListaArgumentos' | ε
+
+FuncReservada           -> 'mover'
+                         | 'girarIzq'
+                         | 'girarDer'
+                         | 'leerSensor'
+                         | 'parar'
+                         | 'reversa'
+                         | 'esperar'

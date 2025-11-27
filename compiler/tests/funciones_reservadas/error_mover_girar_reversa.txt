@@ -1,0 +1,33 @@
+/*
+ * error_mover_girar_reversa.txt
+ * Pruebas NEGATIVAS para verificar que el analizador semántico
+ * detecta cantidades y tipos de argumentos incorrectos en
+ * 'mover', 'girarIzq', 'girarDer' y 'reversa'.
+ */
+
+// 1. Declaraciones Globales
+int x = 1;
+boolean flag = true;
+
+// 2. Definicion de Setup
+void setup() {
+    
+    // --- Cantidad de argumentos incorrecta ---
+    mover(1, 2, 3);      // Demasiados argumentos (3).
+    reversa(100);        // Número de argumentos inválido (solo 1).
+    
+    // --- Tipos de argumentos incorrectos ---
+    mover(flag);         // Tipo booleano en vez de numérico.
+    mover("hola");       // Tipo string en vez de numérico.
+    
+    girarIzq(true);      // Tipo booleano para tiempo de giro.
+    girarDer("foo");     // Tipo string para tiempo de giro.
+    
+    reversa(false, 100); // Primer argumento no numérico.
+    reversa(100, "bar"); // Segundo argumento no numérico.
+}
+
+// 3. Funcion auxiliar requerida por la gramática
+void nada() {
+}
+

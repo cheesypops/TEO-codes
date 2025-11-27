@@ -1,0 +1,45 @@
+/*
+ * ok_mover_girar_reversa.txt
+ * Pruebas de llamadas válidas a las funciones reservadas de movimiento
+ * con diferentes combinaciones de argumentos.
+ */
+
+// 1. Declaraciones Globales
+int velocidad;
+int tiempo;
+int lectura;
+boolean activo = true;
+
+// 2. Definicion de Setup
+void setup() {
+    
+    velocidad = 200;
+    tiempo = 500;
+    
+    // Caso base: llamadas sin argumentos (compatibilidad hacia atrás).
+    mover();
+    girarIzq();
+    girarDer();
+    reversa();
+    
+    // Variantes con un solo argumento.
+    mover(velocidad);      // velocidad PWM explícita, sin límite de tiempo.
+    girarIzq(300);         // giro a la izquierda ~300 ms.
+    girarDer(400);         // giro a la derecha ~400 ms.
+    
+    // Variantes con dos argumentos (velocidad, duración en ms).
+    mover(150, 250);       // avanzar a 150 durante 250 ms.
+    reversa(180, 1000);    // reversa a 180 durante 1000 ms.
+    
+    // Combinación con lectura de sensor para evitar optimizaciones triviales.
+    lectura = leerSensor();
+    if (lectura == 3) {
+        parar();
+        activo = false;
+    }
+}
+
+// 3. Funcion auxiliar requerida por la gramática
+void nada() {
+}
+
