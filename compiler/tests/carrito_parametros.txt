@@ -1,35 +1,36 @@
 // 1. Declaraciones globales
-int velRecta   = 300;
-int tiempoCorto = 500;   // ms
-int tiempoGiro  = 2000;   // ms
+int estado;
+int consecutivasNegras = 0;
+boolean corriendo = true;
 
 // 2. Definición de setup
 void setup() {
 
-    // (1) Avance base sin parámetros (usa velocidadBase por defecto)
+    // Arranca avanzando recto a velRecta
     mover();
-    esperar(1000);   // sigue avanzando ~1s
-    parar();
-    esperar(500);    // queda quieto ~0.5s
 
-    // (2) Avance con velocidad explícita (un solo parámetro)
-    mover(velRecta); // avanza a velRecta indefinidamente
-    esperar(1000);   // ~1s a esa velocidad
-    parar();
-    esperar(500);    // pausa
+    while (corriendo) {
 
-    // (3) Avance con velocidad y tiempo (dos parámetros)
-    mover(velRecta, tiempoCorto); // avanza velRecta durante tiempoCorto y se detiene solo
-    esperar(500);                 // pequeña pausa
+        estado = leerSensor();   // 0,1,2,3
 
-    // (4) Giro a la izquierda con tiempo (un parámetro)
-    girarIzq(tiempoGiro); // gira a la izquierda durante tiempoGiro y se detiene
-    esperar(500);         // pausa
+        if (estado == 3) {
+            // Vimos negro (ambos sensores)
+            consecutivasNegras = consecutivasNegras + 1;
 
-    // (5) Reversa con velocidad y tiempo (dos parámetros)
-    reversa(velRecta, tiempoCorto); // reversa velRecta durante tiempoCorto y se detiene
-    esperar(500);
+            if (consecutivasNegras >= 4) {
+                // 4 negras SEGUIDAS → parar definitivamente
+                parar();
+                corriendo = false;
+            }
+        } else {
+            // Se rompió la racha → seguimos avanzando recto, contador a 0
+            consecutivasNegras = 0;
+            // no cambiamos dirección: ya va recto con mover()
+        }
 
-    // (6) Detención final
+        esperar(100);   // pequeña espera entre lecturas
+    }
+
+    // Detención final por seguridad (por si acaso)
     parar();
 }

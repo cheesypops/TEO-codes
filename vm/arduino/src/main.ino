@@ -543,8 +543,8 @@ void ejecutarCiclo()
     break;
 
   case OP_DELAY:
-  {                       // <--- NUEVO
-    int ms = stack[--sp]; // Sacar tiempo de la pila
+  {             
+    int ms = stack[--sp];
     delay(ms);
   }
   break;
@@ -566,7 +566,6 @@ void setup()
   pinMode(pinIN3, OUTPUT);
   pinMode(pinIN4, OUTPUT);
 
-  // ESP32 core 3.x: usar ledcAttach(pin, freq, res) en lugar de ledcSetup + ledcAttachPin
   ledcAttach(pinENA, freqPWM, resPWM);
   ledcAttach(pinENB, freqPWM, resPWM);
 
