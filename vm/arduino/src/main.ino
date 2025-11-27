@@ -26,7 +26,7 @@ const int canalPWM_A = 0;
 const int canalPWM_B = 1;
 const int resPWM = 8;
 const int velocidadBase = 175;
-const int velocidadGiro = 170;
+const int velocidadGiro = 160;
 
 /* ==========================================
    2. DEFINICIÓN DE LA MÁQUINA VIRTUAL

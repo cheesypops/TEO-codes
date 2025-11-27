@@ -1,0 +1,25 @@
+// 1. Declaraciones Globales
+int i = 0;
+int velLado = 200;     // velocidad PWM para los lados del cuadrado
+int tLado = 1200;      // tiempo (ms) para avanzar un lado
+int tGiro = 1250;       // tiempo (ms) para un giro ~90° (ajusta según tu robot)
+
+// 2. Definicion de Setup
+void setup() {
+    
+    // Recorre un cuadrado: avanzar + girar 90° cuatro veces
+    i = 0;
+    while (i < 4) {
+        
+        // Avanzar un lado
+        mover(velLado, tLado);   // avanza a velLado durante tLado ms
+        
+        // Girar 90 grados (aprox) hacia la derecha
+        girarDer(tGiro);         // gira durante tGiro ms
+        
+        i = i + 1;
+    }
+    
+    // Detenerse al terminar el cuadrado
+    parar();
+}

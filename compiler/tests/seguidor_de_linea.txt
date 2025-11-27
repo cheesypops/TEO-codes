@@ -1,9 +1,3 @@
-/*
- * seguidor_linea.txt
- * Implementación del algoritmo de seguimiento de línea
- * adaptado a la Máquina Virtual.
- */
-
 // 1. Declaraciones Globales
 boolean encendido = true;
 int estado = 0;
@@ -39,17 +33,10 @@ void setup() {
         // Caso 4: Ambos ven negro -> Detenerse
         if (estado == 3) {
             parar();
-            // Opcional: Si quieres que el programa termine aqui:
             // encendido = false;
         }
         
-        // Pequeña espera para estabilidad mecánica (50ms)
-        esperar(50);
     }
     
     parar();
-}
-
-// 3. Funcion auxiliar
-void nada() {
 }
