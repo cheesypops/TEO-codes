@@ -4,6 +4,92 @@
 #include <string.h>
 #include "ast/ast.h"
 
+/* Tipos auxiliares internos al parser para listas de operadores y postfijos.
+ * Se declaran aquí porque únicamente son usados dentro de parser.y.
+ */
+typedef struct OpList {
+    char* op;
+    ASTNode* expr;
+    struct OpList* next;
+} OpList;
+
+typedef enum {
+    PF_CALL,
+    PF_INDEX,
+    PF_INC,
+    PF_DEC
+} PostfixKind;
+
+typedef struct PostfixList {
+    PostfixKind kind;
+    ASTNode* arg;
+    ASTNode* index;
+    struct PostfixList* next;
+} PostfixList;
+
+/* Helpers para listas de operadores. */
+static OpList* prepend_op(char* op, ASTNode* expr, OpList* tail) {
+    OpList* node = (OpList*)malloc(sizeof(OpList));
+    node->op = op;
+    node->expr = expr;
+    node->next = tail;
+    return node;
+}
+
+static ASTNode* fold_left(ASTNode* first, OpList* ops) {
+    ASTNode* acc = first;
+    OpList* it = ops;
+    while (it) {
+        acc = crear_nodo_binario(it->op, acc, it->expr, acc->linea);
+        OpList* tmp = it;
+        it = it->next;
+        free(tmp);
+    }
+    return acc;
+}
+
+/* Helpers para listas de postfijos. */
+static PostfixList* prepend_pf(PostfixKind kind, ASTNode* arg, ASTNode* index, PostfixList* tail) {
+    PostfixList* node = (PostfixList*)malloc(sizeof(PostfixList));
+    node->kind = kind;
+    node->arg = arg;
+    node->index = index;
+    node->next = tail;
+    return node;
+}
+
+static ASTNode* apply_postfix(ASTNode* base, PostfixList* list, int linea) {
+    ASTNode* acc = base;
+    PostfixList* it = list;
+    while (it) {
+        switch (it->kind) {
+            case PF_CALL: {
+                ASTNode* call = crear_nodo(NODO_LLAMADA_FUNCION, linea);
+                call->hijo1 = acc;
+                call->hijo2 = it->arg;
+                acc = call;
+                break;
+            }
+            case PF_INDEX: {
+                acc = crear_nodo_binario("[]", acc, it->index, linea);
+                break;
+            }
+            case PF_INC: {
+                acc = crear_nodo_postfix(acc, "++", linea);
+                break;
+            }
+            case PF_DEC: {
+                acc = crear_nodo_postfix(acc, "--", linea);
+                break;
+            }
+        }
+        PostfixList* tmp = it;
+        it = it->next;
+        free(tmp);
+    }
+    return acc;
+}
+
 /* Prototipos de funciones y variables externas utilizadas por el parser. */
 int yylex(void);
 void yyerror(const char *s);
@@ -25,6 +111,8 @@ ASTNode *raiz_ast = NULL;
     int     booleano;
     TipoDato tipo_dato;
     ASTNode* nodo;
+    struct OpList* op_list;
+    struct PostfixList* pf_list;
 }
 
 /* 1. Definición de tokens.
@@ -61,19 +149,21 @@ ASTNode *raiz_ast = NULL;
  * Se indica qué no terminales transportan punteros a nodos del AST
  * y cuáles se asocian a tipos auxiliares (por ejemplo, TipoDato).
  */
-%type <nodo> Programa DeclaracionGlobal SetupDef FuncionDef ListaFunciones
-%type <nodo> Bloque ListaInstrucciones Instruccion
-%type <nodo> Declaracion ListaDeclaradores Declarador DeclaracionInit
+%type <nodo> Programa DeclGlobalsOpt DeclGlobalsOpt2 DeclGlobalItem SetupDef FuncionDef ListaFunciones ListaFunciones2
+%type <nodo> Bloque ListaInstrucciones ListaInstrucciones2 Instruccion
+%type <nodo> Declaracion ListaDeclaradores ListaDeclaradores2 Declarador DeclaracionInit
 %type <nodo> If IfPrima For ForInit ExpresionLogicaFor ForStep DoWhile While
-%type <nodo> ListaParametros ListaParametrosCont Parametro TipoRetorno
+%type <nodo> ListaParametrosOpt ListaParametros2 Parametro TipoRetorno
 %type <tipo_dato> Tipo
-%type <nodo> ListaArgumentos ListaArgumentosCont
+%type <nodo> ListaArgumentosOpt ListaArgumentos2
+%type <op_list> ExpLogicaOrTail ExpLogicaAndTail ExpComparacionTail ExpAditivaTail ExpMultiplicativaTail
+%type <pf_list> ExpPostfijaTail
 
 /* Tipos para la jerarquía explícita de expresiones.
  * Esta jerarquía codifica la precedencia y asociatividad mediante
  * la propia estructura de la gramática, en lugar de usar %left/%right.
  */
-%type <nodo> Expresion ExpLogicaOr ExpLogicaAnd ExpComparacion
+%type <nodo> Expresion ExpresionPrime ExpLogicaOr ExpLogicaAnd ExpComparacion
 %type <nodo> ExpAditiva ExpMultiplicativa ExpUnaria ExpPostfija ExpPrimaria
 
 
@@ -94,7 +184,7 @@ ASTNode *raiz_ast = NULL;
  * de funciones definidas por el usuario al final del archivo.
  */
 Programa
-    : DeclaracionGlobal SetupDef ListaFunciones
+    : DeclGlobalsOpt SetupDef ListaFunciones
     {
         $$ = crear_nodo(NODO_PROGRAMA, @1.first_line);
         $$->hijo1 = $1;
@@ -104,22 +194,32 @@ Programa
     }
     ;
 
-/* DeclaracionGlobal representa las instrucciones ubicadas
- * antes de la definición de setup, modeladas como lista de nodos.
- */
-DeclaracionGlobal
-    : /* lambda */
+/* Secuencia opcional de declaraciones/expresiones globales. */
+DeclGlobalsOpt
+    : DeclGlobalItem DeclGlobalsOpt2
+    {
+        $$ = enlazar_nodos($1, $2);
+    }
+    | /* lambda */
     {
         $$ = crear_nodo_vacio();
     }
-    | DeclaracionGlobal Declaracion PUNTOYCOMA_TOKEN
+    ;
+
+DeclGlobalsOpt2
+    : DeclGlobalItem DeclGlobalsOpt2
     {
-        $$ = enlazar_instruccion($1, $2);
+        $$ = enlazar_nodos($1, $2);
     }
-    | DeclaracionGlobal Expresion PUNTOYCOMA_TOKEN
+    | /* lambda */
     {
-        $$ = enlazar_instruccion($1, $2);
+        $$ = crear_nodo_vacio();
     }
+    ;
+
+DeclGlobalItem
+    : Declaracion PUNTOYCOMA_TOKEN { $$ = $1; }
+    | Expresion PUNTOYCOMA_TOKEN   { $$ = $1; }
     ;
 
 /* SetupDef captura la definición especial 'void setup() { ... }'
@@ -149,13 +249,24 @@ Bloque
  * para recorrer secuencialmente el contenido de un bloque.
  */
 ListaInstrucciones
-    : /* lambda */
+    : Instruccion ListaInstrucciones2
+    {
+        $$ = enlazar_instruccion($1, $2);
+    }
+    | /* lambda */
     {
         $$ = crear_nodo_vacio();
     }
-    | ListaInstrucciones Instruccion
+    ;
+
+ListaInstrucciones2
+    : Instruccion ListaInstrucciones2
     {
         $$ = enlazar_instruccion($1, $2);
+    }
+    | /* lambda */
+    {
+        $$ = crear_nodo_vacio();
     }
     ;
 
@@ -192,13 +303,20 @@ Declaracion
  * para representar declaraciones múltiples separadas por comas.
  */
 ListaDeclaradores
-    : Declarador
+    : Declarador ListaDeclaradores2
     {
-        $$ = $1;
+        $$ = enlazar_nodos($1, $2);
     }
-    | ListaDeclaradores COMA_TOKEN Declarador
+    ;
+
+ListaDeclaradores2
+    : COMA_TOKEN Declarador ListaDeclaradores2
     {
-        $$ = enlazar_nodos($1, $3); /* enlazar_nodos es de ast.c */
+        $$ = enlazar_nodos($2, $3);
+    }
+    | /* lambda */
+    {
+        $$ = crear_nodo_vacio();
     }
     ;
 
@@ -287,18 +405,29 @@ While
  * la producción vacía se modela mediante un nodo NODO_VACIO.
  */
 ListaFunciones
-    : /* lambda */
+    : FuncionDef ListaFunciones2
+    {
+        $$ = enlazar_nodos($1, $2);
+    }
+    | /* lambda */
     {
         $$ = crear_nodo_vacio();
     }
-    | ListaFunciones FuncionDef
+    ;
+
+ListaFunciones2
+    : FuncionDef ListaFunciones2
     {
         $$ = enlazar_nodos($1, $2);
+    }
+    | /* lambda */
+    {
+        $$ = crear_nodo_vacio();
     }
     ;
 
 FuncionDef
-    : TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
+    : TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametrosOpt PAREN_DER_TOKEN Bloque
     {
         $$ = crear_nodo(NODO_FUNCION_DEF, @1.first_line);
         $$->hijo1 = $1;
@@ -311,24 +440,24 @@ FuncionDef
 /* ListaParametros y ListaParametrosCont codifican una lista
  * opcional de parámetros formales enlazados como nodos del AST.
  */
-ListaParametros
-    : /* lambda */
+ListaParametrosOpt
+    : Parametro ListaParametros2
+    {
+        $$ = enlazar_parametro($1, $2);
+    }
+    | /* lambda */
     { 
         $$ = crear_nodo_vacio(); 
     }
-    | ListaParametrosCont
-    {
-        $$ = $1;
-    }
     ;
-ListaParametrosCont
-    : Parametro
+ListaParametros2
+    : COMA_TOKEN Parametro ListaParametros2
     {
-        $$ = $1;
+        $$ = enlazar_parametro($2, $3);
     }
-    | ListaParametrosCont COMA_TOKEN Parametro
+    | /* lambda */
     {
-        $$ = enlazar_parametro($1, $3);
+        $$ = crear_nodo_vacio();
     }
     ;
 
@@ -358,24 +487,25 @@ Tipo
 /* ListaArgumentos modela la secuencia de expresiones que se
  * pasan como argumentos en una llamada a función.
  */
-ListaArgumentos
-    : /* lambda */
+ListaArgumentosOpt
+    : Expresion ListaArgumentos2
+    {
+        $$ = enlazar_argumento($1, $2);
+    }
+    | /* lambda */
     {
         $$ = crear_nodo_vacio();
     }
-    | ListaArgumentosCont
-    {
-        $$ = $1;
-    }
     ;
-ListaArgumentosCont
-    : Expresion
+
+ListaArgumentos2
+    : COMA_TOKEN Expresion ListaArgumentos2
     {
-        $$ = $1;
+        $$ = enlazar_argumento($2, $3);
     }
-    | ListaArgumentosCont COMA_TOKEN Expresion
+    | /* lambda */
     {
-        $$ = enlazar_argumento($1, $3);
+        $$ = crear_nodo_vacio();
     }
     ;
 /* --------------------------------------------- */
@@ -387,108 +517,115 @@ ListaArgumentosCont
  * como asignaciones.
  */
 Expresion
-    : ExpLogicaOr ASIGN_TOKEN Expresion
+    : ExpLogicaOr ExpresionPrime
     {
-        $$ = crear_nodo(NODO_ASIGNACION, @2.first_line);
-        $$->hijo1 = $1;
-        $$->hijo2 = $3;
+        if ($2) {
+            $$ = crear_nodo(NODO_ASIGNACION, @2.first_line);
+            $$->hijo1 = $1;
+            $$->hijo2 = $2;
+        } else {
+            $$ = $1;
+        }
     }
-    | ExpLogicaOr
-    {
-        $$ = $1;
-    }
+    ;
+
+ExpresionPrime
+    : ASIGN_TOKEN Expresion { $$ = $2; }
+    | /* lambda */          { $$ = NULL; }
     ;
 
 /* Nivel 2: OR (||) */
 ExpLogicaOr
-    : ExpLogicaOr OR_TOKEN ExpLogicaAnd
+    : ExpLogicaAnd ExpLogicaOrTail
     {
-        $$ = crear_nodo_binario("||", $1, $3, @2.first_line);
+        $$ = fold_left($1, $2);
     }
-    | ExpLogicaAnd
+    ;
+
+ExpLogicaOrTail
+    : OR_TOKEN ExpLogicaAnd ExpLogicaOrTail
     {
-        $$ = $1;
+        $$ = prepend_op("||", $2, $3);
+    }
+    | /* lambda */
+    {
+        $$ = NULL;
     }
     ;
 
 /* Nivel 3: AND (&&) */
 ExpLogicaAnd
-    : ExpLogicaAnd AND_TOKEN ExpComparacion
+    : ExpComparacion ExpLogicaAndTail
     {
-        $$ = crear_nodo_binario("&&", $1, $3, @2.first_line);
+        $$ = fold_left($1, $2);
     }
-    | ExpComparacion
+    ;
+
+ExpLogicaAndTail
+    : AND_TOKEN ExpComparacion ExpLogicaAndTail
     {
-        $$ = $1;
+        $$ = prepend_op("&&", $2, $3);
+    }
+    | /* lambda */
+    {
+        $$ = NULL;
     }
     ;
 
 /* Nivel 4: Comparación (==, !=, <, <=, >, >=) */
 ExpComparacion
-    : ExpComparacion IGUAL_TOKEN ExpAditiva
+    : ExpAditiva ExpComparacionTail
     {
-        $$ = crear_nodo_binario("==", $1, $3, @2.first_line);
+        $$ = fold_left($1, $2);
     }
-    | ExpComparacion NO_IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("!=", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MENOR_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("<", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("<=", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MAYOR_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario(">", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario(">=", $1, $3, @2.first_line);
-    }
-    | ExpAditiva
-    {
-        $$ = $1;
-    }
+    ;
+
+ExpComparacionTail
+    : IGUAL_TOKEN ExpAditiva ExpComparacionTail        { $$ = prepend_op("==", $2, $3); }
+    | NO_IGUAL_TOKEN ExpAditiva ExpComparacionTail     { $$ = prepend_op("!=", $2, $3); }
+    | MENOR_TOKEN ExpAditiva ExpComparacionTail        { $$ = prepend_op("<",  $2, $3); }
+    | MENOR_IGUAL_TOKEN ExpAditiva ExpComparacionTail  { $$ = prepend_op("<=", $2, $3); }
+    | MAYOR_TOKEN ExpAditiva ExpComparacionTail        { $$ = prepend_op(">",  $2, $3); }
+    | MAYOR_IGUAL_TOKEN ExpAditiva ExpComparacionTail  { $$ = prepend_op(">=", $2, $3); }
+    | /* lambda */                                     { $$ = NULL; }
     ;
 
 /* Nivel 5: Adición/Sustracción (+, -) */
 ExpAditiva
-    : ExpAditiva MAS_TOKEN ExpMultiplicativa
+    : ExpMultiplicativa ExpAditivaTail
     {
-        $$ = crear_nodo_binario("+", $1, $3, @2.first_line);
+        $$ = fold_left($1, $2);
     }
-    | ExpAditiva MENOS_TOKEN ExpMultiplicativa
+    ;
+
+ExpAditivaTail
+    : MAS_TOKEN ExpMultiplicativa ExpAditivaTail
     {
-        $$ = crear_nodo_binario("-", $1, $3, @2.first_line);
+        $$ = prepend_op("+", $2, $3);
     }
-    | ExpMultiplicativa
+    | MENOS_TOKEN ExpMultiplicativa ExpAditivaTail
     {
-        $$ = $1;
+        $$ = prepend_op("-", $2, $3);
+    }
+    | /* lambda */
+    {
+        $$ = NULL;
     }
     ;
 
 /* Nivel 6: Multiplicación/División (*, /, %) */
 ExpMultiplicativa
-    : ExpMultiplicativa MULT_TOKEN ExpUnaria
+    : ExpUnaria ExpMultiplicativaTail
     {
-        $$ = crear_nodo_binario("*", $1, $3, @2.first_line);
+        $$ = fold_left($1, $2);
     }
-    | ExpMultiplicativa DIV_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_binario("/", $1, $3, @2.first_line);
-    }
-    | ExpMultiplicativa MOD_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_binario("%", $1, $3, @2.first_line);
-    }
-    | ExpUnaria
-    {
-        $$ = $1;
-    }
+    ;
+
+ExpMultiplicativaTail
+    : MULT_TOKEN ExpUnaria ExpMultiplicativaTail { $$ = prepend_op("*", $2, $3); }
+    | DIV_TOKEN ExpUnaria ExpMultiplicativaTail  { $$ = prepend_op("/", $2, $3); }
+    | MOD_TOKEN ExpUnaria ExpMultiplicativaTail  { $$ = prepend_op("%", $2, $3); }
+    | /* lambda */                               { $$ = NULL; }
     ;
 
 /* Nivel 7: Prefijos unarios (!, -, +, ++, --) */
@@ -521,27 +658,32 @@ ExpUnaria
 
 /* Nivel 8: Postfijos (llamada, acceso a arreglo, ++, --) */
 ExpPostfija
-    : ExpPrimaria
+    : ExpPrimaria ExpPostfijaTail
     {
-        $$ = $1;
+        $$ = apply_postfix($1, $2, @1.first_line);
     }
-    | ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
+    ;
+
+ExpPostfijaTail
+    : PAREN_IZQ_TOKEN ListaArgumentosOpt PAREN_DER_TOKEN ExpPostfijaTail
     {
-        $$ = crear_nodo(NODO_LLAMADA_FUNCION, @2.first_line);
-        $$->hijo1 = $1;
-        $$->hijo2 = $3;
+        $$ = prepend_pf(PF_CALL, $2, NULL, $4);
     }
-    | ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
+    | CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN ExpPostfijaTail
     {
-        $$ = crear_nodo_binario("[]", $1, $3, @2.first_line);
+        $$ = prepend_pf(PF_INDEX, NULL, $2, $4);
     }
-    | ExpPostfija INC_TOKEN
+    | INC_TOKEN ExpPostfijaTail
     {
-        $$ = crear_nodo_postfix($1, "++", @2.first_line);
+        $$ = prepend_pf(PF_INC, NULL, NULL, $2);
     }
-    | ExpPostfija DEC_TOKEN
+    | DEC_TOKEN ExpPostfijaTail
     {
-        $$ = crear_nodo_postfix($1, "--", @2.first_line);
+        $$ = prepend_pf(PF_DEC, NULL, NULL, $2);
+    }
+    | /* lambda */
+    {
+        $$ = NULL;
     }
     ;
 
