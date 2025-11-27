@@ -61,7 +61,7 @@ ASTNode *raiz_ast = NULL;
  * Se indica qué no terminales transportan punteros a nodos del AST
  * y cuáles se asocian a tipos auxiliares (por ejemplo, TipoDato).
  */
-%type <nodo> Programa DeclaracionGlobal SetupDef FuncionDef
+%type <nodo> Programa DeclaracionGlobal SetupDef FuncionDef ListaFunciones
 %type <nodo> Bloque ListaInstrucciones Instruccion
 %type <nodo> Declaracion ListaDeclaradores Declarador DeclaracionInit
 %type <nodo> If IfPrima For ForInit ExpresionLogicaFor ForStep DoWhile While
@@ -90,15 +90,16 @@ ASTNode *raiz_ast = NULL;
 /* --------------------------------------------- */
 /* La regla inicial 'Programa' construye la raíz
  * del AST, que encapsula declaraciones globales,
- * la definición de setup y las funciones definidas.
+ * la definición de setup y una lista (posiblemente vacía)
+ * de funciones definidas por el usuario al final del archivo.
  */
 Programa
-    : DeclaracionGlobal SetupDef FuncionDef
+    : DeclaracionGlobal SetupDef ListaFunciones
     {
         $$ = crear_nodo(NODO_PROGRAMA, @1.first_line);
         $$->hijo1 = $1;
         $$->hijo2 = $2;
-        $$->hijo3 = $3;
+        $$->hijo3 = $3; /* $3 es la cabeza de la lista de funciones o un NODO_VACIO si no hay funciones. */
         raiz_ast = $$;
     }
     ;
@@ -280,6 +281,22 @@ While
 /* --------------------------------------------- */
 /* 6. Definición de funciones                    */
 /* --------------------------------------------- */
+/* ListaFunciones modela la secuencia opcional de definiciones
+ * de funciones de usuario situadas después de setup().
+ * Se representa como una lista enlazada usando el campo 'siguiente';
+ * la producción vacía se modela mediante un nodo NODO_VACIO.
+ */
+ListaFunciones
+    : /* lambda */
+    {
+        $$ = crear_nodo_vacio();
+    }
+    | ListaFunciones FuncionDef
+    {
+        $$ = enlazar_nodos($1, $2);
+    }
+    ;
+
 FuncionDef
     : TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
     {

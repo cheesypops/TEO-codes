@@ -130,6 +130,20 @@ TipoDato analizar_expresion(ASTNode* nodo);
 void analizar_declaracion(ASTNode* nodo);
 void analizar_bloque(ASTNode* nodo);
 
+/* Funciones auxiliares internas para manejar listas de argumentos.
+ * Estas rutinas permiten contar y recorrer los argumentos reales de
+ * una llamada a función enlazados mediante el campo 'siguiente'.
+ */
+static int contar_argumentos(ASTNode* lista) {
+    int contador = 0;
+    ASTNode* actual = lista;
+    while (actual && actual->tipo != NODO_VACIO) {
+        contador++;
+        actual = actual->siguiente;
+    }
+    return contador;
+}
+
 
 /* ====================================================== */
 /* FASE 1: RECOLECCIÓN DE SÍMBOLOS                        */
@@ -608,43 +622,133 @@ TipoDato analizar_expresion(ASTNode* nodo) {
             // Caso 2: funciones reservadas del sistema.
             } else if (callee->tipo == NODO_FUNCION_RESERVADA) {
                 char* nombre_func = callee->data.cadena;
+                ASTNode* args = nodo->hijo2;
+                int arg_count = contar_argumentos(args);
+
+                /* En este bloque se define la interfaz semántica de las
+                 * funciones reservadas del robot: número y tipo de parámetros.
+                 */
                 printf("[Fase 2] Analizando llamada a función reservada '%s'.\n", nombre_func);
-                
-                if (strcmp(nombre_func, "parar") == 0 ||
-                    strcmp(nombre_func, "mover") == 0 ||
-                    strcmp(nombre_func, "girarIzq") == 0 ||
-                    strcmp(nombre_func, "girarDer") == 0 ||
-                    strcmp(nombre_func, "reversa") == 0) 
-                {
-                    if (nodo->hijo2->tipo != NODO_VACIO) {
-                         fprintf(stderr, "Error semántico (línea %d): '%s()' no admite argumentos.\n", nodo->linea, nombre_func);
+
+                /* mover(): puede recibir 0, 1 o 2 argumentos numéricos.
+                 *  - mover()                      -> usa velocidadBase.
+                 *  - mover(velocidad)             -> velocidad PWM explícita.
+                 *  - mover(velocidad, duracionMs) -> velocidad y duración.
+                 */
+                if (strcmp(nombre_func, "mover") == 0) {
+                    if (arg_count < 0 || arg_count > 2) {
+                        fprintf(stderr,
+                                "Error semántico (línea %d): la función 'mover()' admite 0, 1 o 2 argumentos; se recibieron %d.\n",
+                                nodo->linea, arg_count);
+                    }
+
+                    if (arg_count >= 1 && args && args->tipo != NODO_VACIO) {
+                        TipoDato tipo_arg1 = analizar_expresion(args);
+                        if (tipo_arg1 != TIPO_INT && tipo_arg1 != TIPO_FLOAT) {
+                            fprintf(stderr,
+                                    "Error semántico (línea %d): el primer argumento de 'mover()' debe ser numérico (velocidad PWM).\n",
+                                    nodo->linea);
+                        }
+                    }
+                    if (arg_count >= 2 && args && args->siguiente && args->siguiente->tipo != NODO_VACIO) {
+                        TipoDato tipo_arg2 = analizar_expresion(args->siguiente);
+                        if (tipo_arg2 != TIPO_INT && tipo_arg2 != TIPO_FLOAT) {
+                            fprintf(stderr,
+                                    "Error semántico (línea %d): el segundo argumento de 'mover()' debe ser numérico (duración en milisegundos).\n",
+                                    nodo->linea);
+                        }
                     }
                     return TIPO_VOID;
                 }
 
-                if (strcmp(nombre_func, "esperar") == 0) {
-                     // Verifica que se haya proporcionado al menos un argumento.
-                     if (nodo->hijo2->tipo == NODO_VACIO) {
-                         fprintf(stderr, "Error semántico (línea %d): 'esperar()' requiere un argumento con la cantidad de milisegundos.\n", nodo->linea);
-                         return TIPO_VOID;
-                     }
-                     
-                     // Verifica el tipo del argumento principal.
-                     TipoDato tipo_arg = analizar_expresion(nodo->hijo2); // Primer argumento.
-                     if (tipo_arg != TIPO_INT && tipo_arg != TIPO_FLOAT) {
-                         fprintf(stderr, "Error semántico (línea %d): 'esperar()' requiere un valor numérico entero (milisegundos).\n", nodo->linea);
-                     }
-                     
-                     return TIPO_VOID; // No devuelve valor
+                /* girarIzq()/girarDer(): pueden recibir 0 o 1 argumento numérico
+                 * que representa el tiempo de giro en milisegundos.
+                 */
+                if (strcmp(nombre_func, "girarIzq") == 0 || strcmp(nombre_func, "girarDer") == 0) {
+                    if (arg_count < 0 || arg_count > 1) {
+                        fprintf(stderr,
+                                "Error semántico (línea %d): la función '%s()' admite 0 o 1 argumentos; se recibieron %d.\n",
+                                nodo->linea, nombre_func, arg_count);
+                    }
+                    if (arg_count == 1 && args && args->tipo != NODO_VACIO) {
+                        TipoDato tipo_arg = analizar_expresion(args);
+                        if (tipo_arg != TIPO_INT && tipo_arg != TIPO_FLOAT) {
+                            fprintf(stderr,
+                                    "Error semántico (línea %d): el primer argumento de '%s()' debe ser numérico (tiempo en milisegundos).\n",
+                                    nodo->linea, nombre_func);
+                        }
+                    }
+                    return TIPO_VOID;
                 }
-                
+
+                /* reversa(): puede recibir 0 o 2 argumentos numéricos.
+                 *  - reversa()                      -> usa velocidadBase.
+                 *  - reversa(velocidad, duracionMs) -> velocidad y duración.
+                 */
+                if (strcmp(nombre_func, "reversa") == 0) {
+                    if (arg_count != 0 && arg_count != 2) {
+                        fprintf(stderr,
+                                "Error semántico (línea %d): la función 'reversa()' admite 0 o 2 argumentos; se recibieron %d.\n",
+                                nodo->linea, arg_count);
+                    }
+                    if (arg_count >= 1 && args && args->tipo != NODO_VACIO) {
+                        TipoDato tipo_arg1 = analizar_expresion(args);
+                        if (tipo_arg1 != TIPO_INT && tipo_arg1 != TIPO_FLOAT) {
+                            fprintf(stderr,
+                                    "Error semántico (línea %d): el primer argumento de 'reversa()' debe ser numérico (velocidad PWM).\n",
+                                    nodo->linea);
+                        }
+                    }
+                    if (arg_count >= 2 && args && args->siguiente && args->siguiente->tipo != NODO_VACIO) {
+                        TipoDato tipo_arg2 = analizar_expresion(args->siguiente);
+                        if (tipo_arg2 != TIPO_INT && tipo_arg2 != TIPO_FLOAT) {
+                            fprintf(stderr,
+                                    "Error semántico (línea %d): el segundo argumento de 'reversa()' debe ser numérico (duración en milisegundos).\n",
+                                    nodo->linea);
+                        }
+                    }
+                    return TIPO_VOID;
+                }
+
+                /* esperar(): requiere exactamente un argumento numérico que
+                 * representa la cantidad de milisegundos a esperar.
+                 */
+                if (strcmp(nombre_func, "esperar") == 0) {
+                    if (arg_count == 0) {
+                        fprintf(stderr,
+                                "Error semántico (línea %d): 'esperar()' requiere exactamente 1 argumento con la cantidad de milisegundos.\n",
+                                nodo->linea);
+                        return TIPO_VOID;
+                    }
+                    if (arg_count > 1) {
+                        fprintf(stderr,
+                                "Error semántico (línea %d): la función 'esperar()' admite exactamente 1 argumento; se recibieron %d.\n",
+                                nodo->linea, arg_count);
+                    }
+
+                    if (args && args->tipo != NODO_VACIO) {
+                        TipoDato tipo_arg = analizar_expresion(args);
+                        if (tipo_arg != TIPO_INT && tipo_arg != TIPO_FLOAT) {
+                            fprintf(stderr,
+                                    "Error semántico (línea %d): 'esperar()' requiere un valor numérico (milisegundos).\n",
+                                    nodo->linea);
+                        }
+                    }
+                    return TIPO_VOID;
+                }
+
+                /* leerSensor(): no admite argumentos y devuelve un valor entero
+                 * que codifica el estado de los sensores.
+                 */
                 if (strcmp(nombre_func, "leerSensor") == 0) {
-                     if (nodo->hijo2->tipo != NODO_VACIO) {
-                         fprintf(stderr, "Error semántico (línea %d): '%s()' no admite argumentos.\n", nodo->linea, nombre_func);
+                    if (arg_count != 0) {
+                        fprintf(stderr,
+                                "Error semántico (línea %d): la función 'leerSensor()' no admite argumentos.\n",
+                                nodo->linea);
                     }
                     return TIPO_INT;
                 }
-                
+
                 return TIPO_DESCONOCIDO;
             }
             

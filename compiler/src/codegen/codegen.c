@@ -208,16 +208,59 @@ void generar_nodo(ASTNode* nodo) {
         case NODO_LLAMADA_FUNCION: {
             if (nodo->hijo1->tipo == NODO_FUNCION_RESERVADA) {
                 char* func = nodo->hijo1->data.cadena;
-                
-                if (nodo->hijo2->tipo != NODO_VACIO) generar_nodo(nodo->hijo2);
 
-                if (strcmp(func, "mover") == 0) emit(OP_MOVER);
-                else if (strcmp(func, "parar") == 0) emit(OP_PARAR);
-                else if (strcmp(func, "girarIzq") == 0) emit(OP_GIRAR_IZQ);
-                else if (strcmp(func, "girarDer") == 0) emit(OP_GIRAR_DER);
-                else if (strcmp(func, "reversa") == 0) emit(OP_REVERSA);
-                else if (strcmp(func, "leerSensor") == 0) emit(OP_LEER_SENSOR);
-                else if (strcmp(func, "esperar") == 0) emit(OP_DELAY);
+                /* Para las funciones reservadas del robot, la convención de paso
+                 * de parámetros es la siguiente:
+                 *   1) Se evalúan los argumentos de izquierda a derecha y se
+                 *      dejan sus valores en la pila.
+                 *   2) Para mover/girar/reversa se empuja un contador de
+                 *      argumentos (OP_CONST n) antes del opcode.
+                 *   3) La VM lee el contador y consume los valores de la pila
+                 *      según la firma concreta de cada función.
+                 *   4) Para esperar(), el argumento se deja directamente en la
+                 *      pila y la instrucción DELAY lo consume sin contador
+                 *      adicional para preservar el diseño original.
+                 */
+
+                int arg_count = 0;
+                ASTNode* arg = nodo->hijo2;
+                while (arg && arg->tipo != NODO_VACIO) {
+                    generar_nodo(arg);
+                    arg_count++;
+                    arg = arg->siguiente;
+                }
+
+                if (strcmp(func, "mover") == 0 ||
+                    strcmp(func, "girarIzq") == 0 ||
+                    strcmp(func, "girarDer") == 0 ||
+                    strcmp(func, "reversa") == 0) {
+                    /* Inserta el contador de argumentos para que la VM pueda
+                     * adaptar su comportamiento sin necesidad de nuevos opcodes.
+                     */
+                    emit(OP_CONST);
+                    emit(arg_count);
+
+                    if (strcmp(func, "mover") == 0) emit(OP_MOVER);
+                    else if (strcmp(func, "girarIzq") == 0) emit(OP_GIRAR_IZQ);
+                    else if (strcmp(func, "girarDer") == 0) emit(OP_GIRAR_DER);
+                    else if (strcmp(func, "reversa") == 0) emit(OP_REVERSA);
+                } else if (strcmp(func, "parar") == 0) {
+                    /* 'parar()' no utiliza parámetros; la fase semántica se
+                     * encarga de garantizar que no existan argumentos.
+                     */
+                    emit(OP_PARAR);
+                } else if (strcmp(func, "leerSensor") == 0) {
+                    /* 'leerSensor()' tampoco recibe argumentos y deja el valor
+                     * leído en la pila.
+                     */
+                    emit(OP_LEER_SENSOR);
+                } else if (strcmp(func, "esperar") == 0) {
+                    /* Para 'esperar(ms)', el argumento ya se encuentra en la
+                     * pila; DELAY consume directamente el tiempo en
+                     * milisegundos sin contador extra.
+                     */
+                    emit(OP_DELAY);
+                }
             }
             break;
         }

@@ -5,8 +5,9 @@ bytecode** y una **máquina virtual en Arduino/ESP32** para controlar un carro
 seguidor / evita–líneas con ESP32 y micro‑SD.
 
 - **Idea principal**: escribir programas en un lenguaje sencillo (similar a
-  C++), con algunas **funciones reservadas** para mover el carro, y compilar
-  esos programas a un **bytecode** que luego ejecuta la VM en el ESP32.
+  C++), con algunas **funciones reservadas** para mover el carro (que pueden
+  aceptar argumentos opcionales como velocidad y duración), y compilar esos
+  programas a un **bytecode** que luego ejecuta la VM en el ESP32.
 
 ---
 
@@ -26,6 +27,8 @@ seguidor / evita–líneas con ESP32 y micro‑SD.
     - `Makefile` – Script de compilación del compilador.
   - **`tests/`**
     - `test.txt`, `testAuxiliares.txt` – Programas de ejemplo en el lenguaje.
+    - `funciones_reservadas/` – Pruebas dedicadas a las funciones reservadas del
+      robot (casos válidos y de error con argumentos).
   - **`build/`** (generado por `make`, no editar a mano)
     - `bin/mi_compilador` – Ejecutable del compilador.
     - `gen/` – Archivos generados por Bison/Flex:
@@ -159,17 +162,29 @@ Una vez que el ESP32 arranca:
   - Dos fases:
     - Recolección de símbolos globales y encabezados de funciones.
     - Análisis de cuerpos (tipos de expresiones, argumentos, etc.).
-  - Valida el uso correcto de las funciones reservadas del robot:
-    - Sin argumentos (`mover()`, `parar()`, `girarIzq()`, etc.).
-    - `esperar(ms)` con 1 argumento numérico.
-    - `leerSensor()` que devuelve `int`.
+  - Valida el uso correcto de las funciones reservadas del robot, incluyendo
+    número y tipo de argumentos:
+    - `mover()`, `mover(velocidad)`, `mover(velocidad, duracionMs)` con
+      argumentos numéricos (velocidad PWM y duración en milisegundos).
+    - `girarIzq()`, `girarIzq(tiempoMs)`, `girarDer()`, `girarDer(tiempoMs)` con
+      tiempo en milisegundos.
+    - `reversa()`, `reversa(velocidad, duracionMs)` con parámetros numéricos.
+    - `esperar(ms)` con exactamente 1 argumento numérico (milisegundos).
+    - `leerSensor()` sin argumentos, que devuelve un `int`.
 
 - **Generación de código (`codegen/codegen.c`)**
   - Recorre el AST y emite bytecode para una **máquina de pila**:
     - Operaciones aritméticas y lógicas.
     - Saltos condicionales y bucles.
     - Acceso a variables usando direcciones de la tabla de símbolos.
-    - Llamadas a funciones reservadas → opcodes de la VM (mover, parar, etc.).
+    - Llamadas a funciones reservadas → opcodes de la VM (mover, parar, girar,
+      reversa, esperar, leerSensor, etc.).
+    - Para las funciones de movimiento (`mover`, `girarIzq`, `girarDer`,
+      `reversa`), primero deja los argumentos en la pila y luego empuja un
+      contador de argumentos antes del opcode, que la VM utiliza para ajustar
+      velocidad y duración sin crear nuevos opcodes.
+    - Para `esperar(ms)` deja el tiempo en la pila y emite `DELAY`, que consume
+      directamente ese valor.
   - Escribe el bytecode legible en `codigo.txt`.
 
 ---

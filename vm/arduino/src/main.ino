@@ -98,22 +98,12 @@ void detenerse()
 
 void avanzar()
 {
-  digitalWrite(pinIN1, HIGH);
-  digitalWrite(pinIN2, LOW);
-  ledcWrite(canalPWM_A, velocidadBase);
-  digitalWrite(pinIN3, HIGH);
-  digitalWrite(pinIN4, LOW);
-  ledcWrite(canalPWM_B, velocidadBase);
+  avanzarConVelocidad(velocidadBase);
 }
 
 void reversa()
 {
-  digitalWrite(pinIN1, LOW);
-  digitalWrite(pinIN2, HIGH);
-  ledcWrite(canalPWM_A, velocidadBase);
-  digitalWrite(pinIN3, LOW);
-  digitalWrite(pinIN4, HIGH);
-  ledcWrite(canalPWM_B, velocidadBase);
+  reversaConVelocidad(velocidadBase);
 }
 
 void girarIzquierda()
@@ -148,6 +138,30 @@ int leerSensores()
   if (izq == 0 && der == 1)
     return 2;
   return 3;
+}
+
+/* Funciones auxiliares parametrizadas para el control de movimiento.
+ * Estas variantes permiten ajustar dinámicamente la velocidad desde
+ * el bytecode sin alterar el comportamiento por defecto.
+ */
+void avanzarConVelocidad(int vel)
+{
+  digitalWrite(pinIN1, HIGH);
+  digitalWrite(pinIN2, LOW);
+  ledcWrite(canalPWM_A, vel);
+  digitalWrite(pinIN3, HIGH);
+  digitalWrite(pinIN4, LOW);
+  ledcWrite(canalPWM_B, vel);
+}
+
+void reversaConVelocidad(int vel)
+{
+  digitalWrite(pinIN1, LOW);
+  digitalWrite(pinIN2, HIGH);
+  ledcWrite(canalPWM_A, vel);
+  digitalWrite(pinIN3, LOW);
+  digitalWrite(pinIN4, HIGH);
+  ledcWrite(canalPWM_B, vel);
 }
 
 /* ==========================================
@@ -406,20 +420,123 @@ void ejecutarCiclo()
 
   // Robot y Control
   case OP_MOVER:
-    avanzar();
+  {
+    /* La instrucción MOVER lee, si existe, un contador de argumentos desde
+     * la pila para adaptar su comportamiento:
+     *   - 0 argumentos: usa velocidadBase indefinidamente.
+     *   - 1 argumento: velocidad PWM explícita.
+     *   - 2 argumentos: velocidad PWM y duración en ms; luego se detiene.
+     * El compilador empuja primero los valores y, a continuación, el contador.
+     */
+    int argc = 0;
+    if (sp > 0)
+    {
+      argc = stack[--sp];
+    }
+
+    if (argc <= 0)
+    {
+      avanzar();
+    }
+    else if (argc == 1 && sp >= 1)
+    {
+      int vel = stack[--sp];
+      avanzarConVelocidad(vel);
+    }
+    else if (argc >= 2 && sp >= 2)
+    {
+      int duracionMs = stack[--sp];
+      int vel = stack[--sp];
+      avanzarConVelocidad(vel);
+      delay(duracionMs);
+      detenerse();
+    }
     break;
+  }
   case OP_PARAR:
     detenerse();
     break;
   case OP_GIRAR_IZQ:
-    girarIzquierda();
+  {
+    /* GIRAR_IZQ puede recibir opcionalmente un argumento con el tiempo
+     * de giro en milisegundos. Si no se proporciona, el giro es continuo.
+     */
+    int argc = 0;
+    if (sp > 0)
+    {
+      argc = stack[--sp];
+    }
+
+    if (argc <= 0)
+    {
+      girarIzquierda();
+    }
+    else if (argc >= 1 && sp >= 1)
+    {
+      int tiempoMs = stack[--sp];
+      girarIzquierda();
+      delay(tiempoMs);
+      detenerse();
+    }
     break;
+  }
   case OP_GIRAR_DER:
-    girarDerecha();
+  {
+    /* GIRAR_DER sigue la misma convención que GIRAR_IZQ: un argumento
+     * opcional con el tiempo de giro en milisegundos.
+     */
+    int argc = 0;
+    if (sp > 0)
+    {
+      argc = stack[--sp];
+    }
+
+    if (argc <= 0)
+    {
+      girarDerecha();
+    }
+    else if (argc >= 1 && sp >= 1)
+    {
+      int tiempoMs = stack[--sp];
+      girarDerecha();
+      delay(tiempoMs);
+      detenerse();
+    }
     break;
+  }
   case OP_REVERSA:
-    reversa();
+  {
+    /* REVERSA utiliza el mismo esquema que MOVER, pero en sentido inverso:
+     *   - 0 argumentos: usa velocidadBase indefinidamente.
+     *   - 2 argumentos: velocidad PWM y duración en ms; luego se detiene.
+     * Si solo se recibe un argumento (caso no esperado), se interpreta
+     * como velocidad sin duración para mayor tolerancia.
+     */
+    int argc = 0;
+    if (sp > 0)
+    {
+      argc = stack[--sp];
+    }
+
+    if (argc <= 0)
+    {
+      reversa();
+    }
+    else if (argc == 1 && sp >= 1)
+    {
+      int vel = stack[--sp];
+      reversaConVelocidad(vel);
+    }
+    else if (argc >= 2 && sp >= 2)
+    {
+      int duracionMs = stack[--sp];
+      int vel = stack[--sp];
+      reversaConVelocidad(vel);
+      delay(duracionMs);
+      detenerse();
+    }
     break;
+  }
 
   case OP_LEER_SENSOR:
     stack[sp++] = leerSensores();

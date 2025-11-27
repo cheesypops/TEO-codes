@@ -1,0 +1,28 @@
+/*
+ * error_esperar_y_leerSensor.txt
+ * Pruebas NEGATIVAS de validación de argumentos para 'esperar'
+ * y 'leerSensor'.
+ */
+
+// 1. Declaraciones Globales
+int t;
+int s;
+
+// 2. Definicion de Setup
+void setup() {
+    
+    // --- esperar(): problemas de cantidad de argumentos ---
+    esperar();              // Sin argumentos.
+    esperar(100, 200);      // Demasiados argumentos.
+    
+    // --- esperar(): problemas de tipo de argumento ---
+    esperar("hola");        // Tipo string.
+    
+    // --- leerSensor(): no debe admitir argumentos ---
+    s = leerSensor(1);      // Argumento de más.
+}
+
+// 3. Funcion auxiliar requerida por la gramática
+void nada() {
+}
+
