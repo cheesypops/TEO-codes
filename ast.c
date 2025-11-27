@@ -1,187 +1,251 @@
+/* ==========================================
+   ast.c - Implementación del AST
+   ========================================== */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ast.h"
 
-/* Función base para crear un nodo */
-ASTNode* crear_nodo(TipoNodo tipo, int linea) {
-    ASTNode* nodo = (ASTNode*)malloc(sizeof(ASTNode));
-    if (!nodo) {
-        fprintf(stderr, "Error: No se pudo asignar memoria para el nodo AST\n");
+/* ==========================================
+   CONSTRUCTORES DE NODOS
+   ========================================== */
+
+/* Función base para crear un nodo genérico e inicializarlo */
+ASTNode* newASTNode(NodeKind kind) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    if (!node) {
+        fprintf(stderr, "Error: No hay memoria suficiente para crear nodo AST.\n");
         exit(1);
     }
-    nodo->tipo = tipo;
-    nodo->hijo1 = NULL;
-    nodo->hijo2 = NULL;
-    nodo->hijo3 = NULL;
-    nodo->hijo4 = NULL;
-    nodo->siguiente = NULL;
-    nodo->data.cadena = NULL;
-    nodo->linea = linea;
-    return nodo;
-}
-
-ASTNode* crear_nodo_vacio() {
-    return crear_nodo(NODO_VACIO, 0);
-}
-
-ASTNode* crear_nodo_hoja_id(char* nombre, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_IDENTIFICADOR, linea);
-    nodo->data.cadena = nombre; // yylval se encargará de la memoria
-    return nodo;
-}
-
-ASTNode* crear_nodo_hoja_num(double valor, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_NUMERO, linea);
-    nodo->data.valor_num = valor;
-    return nodo;
-}
-
-ASTNode* crear_nodo_hoja_cadena(char* valor, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_CADENA, linea);
-    nodo->data.cadena = valor; // yylval se encargará de la memoria
-    return nodo;
-}
-
-ASTNode* crear_nodo_hoja_bool(int valor, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_BOOLEANO, linea);
-    nodo->data.valor_bool = valor;
-    return nodo;
-}
-
-ASTNode* crear_nodo_tipo(TipoDato tipo, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_TIPO, linea);
-    nodo->data.tipo_dato = tipo;
-    return nodo;
-}
-
-ASTNode* crear_nodo_unario(char* op, ASTNode* hijo, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_UNARIO_OP, linea);
-    nodo->data.op_unario = op;
-    nodo->hijo1 = hijo;
-    return nodo;
-}
-
-ASTNode* crear_nodo_binario(char* op, ASTNode* izq, ASTNode* der, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_BINARIO_OP, linea);
-    nodo->data.op_unario = op; // Usamos op_unario para guardar el string del op
-    nodo->hijo1 = izq;
-    nodo->hijo2 = der;
-    return nodo;
-}
-
-ASTNode* crear_nodo_postfix(ASTNode* hijo, char* op, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_POSTFIX_OP, linea);
-    nodo->data.op_unario = op;
-    nodo->hijo1 = hijo;
-    return nodo;
-}
-
-ASTNode* crear_nodo_funcion_reservada(char* nombre, int linea) {
-    ASTNode* nodo = crear_nodo(NODO_FUNCION_RESERVADA, linea);
-    /* Asignamos el string literal estático. No necesitamos strdup() */
-    nodo->data.cadena = nombre; 
-    return nodo;
-}
-
-/* Enlaza dos nodos en una lista usando el campo 'siguiente' */
-ASTNode* enlazar_nodos(ASTNode* lista, ASTNode* item) {
-    if (!lista || lista->tipo == NODO_VACIO) {
-        /* Si la lista es nula o vacía, el item es la nueva lista */
-        return item;
-    }
-    ASTNode* actual = lista;
-    while (actual->siguiente) {
-        actual = actual->siguiente;
-    }
-    actual->siguiente = item;
-    return lista;
-}
-
-ASTNode* enlazar_instruccion(ASTNode* lista, ASTNode* instruccion) {
-    return enlazar_nodos(lista, instruccion);
-}
-
-ASTNode* enlazar_parametro(ASTNode* lista, ASTNode* parametro) {
-    return enlazar_nodos(lista, parametro);
-}
-
-ASTNode* enlazar_argumento(ASTNode* lista, ASTNode* argumento) {
-    return enlazar_nodos(lista, argumento);
-}
-
-ASTNode* enlazar_declaracion(ASTNode* lista, ASTNode* declaracion_init) {
-    // Para Declaracion' -> , id Init Declaracion'
-    // 'lista' es el nodo (id, init) y 'declaracion_init' es el resto de la lista
-    return enlazar_nodos(lista, declaracion_init);
-}
-
-
-/* Libera recursivamente el árbol */
-void liberar_arbol(ASTNode* nodo) {
-    if (!nodo) return;
     
-    // Libera hijos
-    liberar_arbol(nodo->hijo1);
-    liberar_arbol(nodo->hijo2);
-    liberar_arbol(nodo->hijo3);
-    liberar_arbol(nodo->hijo4);
-    liberar_arbol(nodo->siguiente);
+    node->kind = kind;
+    node->type_name = NULL;
+    node->left = NULL;
+    node->right = NULL;
+    node->extra = NULL;
+    node->next = NULL;
+    
+    // Inicializamos la unión data a 0/NULL
+    node->data.str_val = NULL; 
+    
+    return node;
+}
 
-    // Libera datos internos si es necesario (IDs y Cadenas)
-    if (nodo->tipo == NODO_IDENTIFICADOR || nodo->tipo == NODO_CADENA) {
-        if (nodo->data.cadena) {
-            free(nodo->data.cadena);
+/* Constructor para Operaciones Binarias (Suma, AND, Igualdad, etc.) */
+ASTNode* newBinaryNode(char *op, ASTNode *left, ASTNode *right) {
+    ASTNode* node = newASTNode(NODE_BIN_OP);
+    node->data.str_val = strdup(op); // Copiamos la cadena del operador
+    node->left = left;
+    node->right = right;
+    return node;
+}
+
+/* Constructor para Operaciones Unarias (Negación, Incremento, etc.) */
+ASTNode* newUnaryNode(char *op, ASTNode *child) {
+    ASTNode* node = newASTNode(NODE_UNARY_OP);
+    node->data.str_val = strdup(op);
+    node->left = child; // Usamos left para el único operando
+    return node;
+}
+
+/* Constructor para Literales Enteros */
+ASTNode* newIntNode(int val) {
+    ASTNode* node = newASTNode(NODE_CONST_INT);
+    node->data.int_val = val;
+    return node;
+}
+
+/* Constructor para Identificadores (Variables) */
+ASTNode* newIDNode(char *name) {
+    ASTNode* node = newASTNode(NODE_ID);
+    node->data.str_val = strdup(name);
+    return node;
+}
+
+/* Constructor para Funciones del Robot */
+ASTNode* newRobotNode(char *action, ASTNode *args) {
+    ASTNode* node = newASTNode(NODE_CALL_ROBOT);
+    node->data.str_val = strdup(action); // Ej: "mover", "girar"
+    node->left = args; // Lista de argumentos en el hijo izquierdo
+    return node;
+}
+
+/* ==========================================
+   UTILIDADES DE VISUALIZACIÓN
+   ========================================== */
+
+/* Helper para imprimir indentación */
+void printIndent(int level) {
+    for (int i = 0; i < level; i++) printf("  ");
+}
+
+/* Función recursiva para imprimir el árbol */
+void printAST(ASTNode *node, int level) {
+    if (!node) return;
+
+    /* Imprimimos el nodo actual y sus hermanos (lista next) */
+    ASTNode *current = node;
+    while (current != NULL) {
+        printIndent(level);
+
+        switch (current->kind) {
+            case NODE_PROGRAM:
+                printf("[PROGRAMA]\n");
+                // Los hijos del programa están en next, el while lo maneja, 
+                // pero si tiene estructura jerárquica interna:
+                break;
+
+            case NODE_FUNCTION:
+                printf("[FUNCION] %s %s\n", 
+                       current->type_name ? current->type_name : "void",
+                       current->data.str_val);
+                printIndent(level + 1); printf("PARAMS:\n");
+                printAST(current->left, level + 2);
+                printIndent(level + 1); printf("CUERPO:\n");
+                printAST(current->right, level + 2);
+                break;
+
+            case NODE_VAR_DECL:
+                printf("[DECLARACION] %s %s\n", 
+                       current->type_name, 
+                       current->data.str_val);
+                if (current->left) {
+                    printIndent(level + 1); printf("Inicializacion:\n");
+                    printAST(current->left, level + 2);
+                }
+                break;
+
+            case NODE_BLOCK:
+                printf("[BLOQUE]\n");
+                // El contenido del bloque está en 'next', pero como estamos en un loop while
+                // sobre 'current', necesitamos diferenciar si 'next' es hermano o hijo.
+                // En el parser definimos: $$->next = $2.
+                // Para visualizar mejor, llamamos recursivamente a next aqui
+                // y rompemos el while del nivel actual si es necesario, 
+                // o iteramos manualmente.
+                printAST(current->next, level + 1);
+                return; // El contenido del bloque se maneja aqui, salimos.
+
+            case NODE_IF:
+                printf("[IF]\n");
+                printIndent(level + 1); printf("Condicion:\n");
+                printAST(current->left, level + 2);
+                printIndent(level + 1); printf("Then:\n");
+                printAST(current->right, level + 2);
+                if (current->extra) {
+                    printIndent(level + 1); printf("Else:\n");
+                    printAST(current->extra, level + 2);
+                }
+                break;
+
+            case NODE_WHILE:
+                printf("[WHILE]\n");
+                printIndent(level + 1); printf("Condicion:\n");
+                printAST(current->left, level + 2);
+                printIndent(level + 1); printf("Cuerpo:\n");
+                printAST(current->right, level + 2);
+                break;
+            
+            case NODE_FOR:
+                printf("[FOR]\n");
+                printIndent(level + 1); printf("Init:\n");
+                printAST(current->left, level + 2);
+                printIndent(level + 1); printf("Cond:\n");
+                printAST(current->right, level + 2);
+                printIndent(level + 1); printf("Step:\n");
+                printAST(current->extra, level + 2);
+                printIndent(level + 1); printf("Cuerpo:\n");
+                // El cuerpo del for lo guardamos en 'next' en el parser
+                printAST(current->next, level + 2); 
+                return; // Salimos para no reimprimir next en el while principal
+
+            case NODE_ASSIGN:
+                printf("[ASIGNACION (=)]\n");
+                printAST(current->left, level + 1);
+                printAST(current->right, level + 1);
+                break;
+
+            case NODE_BIN_OP:
+                printf("[OP BINARIA] %s\n", current->data.str_val);
+                printAST(current->left, level + 1);
+                printAST(current->right, level + 1);
+                break;
+
+            case NODE_CONST_INT:
+                printf("[INT] %d\n", current->data.int_val);
+                break;
+            
+            case NODE_CONST_STR:
+                printf("[STRING] %s\n", current->data.str_val);
+                break;
+
+            case NODE_CONST_BOOL:
+                printf("[BOOL] %s\n", current->data.int_val ? "true" : "false");
+                break;
+
+            case NODE_ID:
+                printf("[ID] %s\n", current->data.str_val);
+                break;
+
+            case NODE_CALL_ROBOT:
+                printf("[ROBOT ACCION] %s\n", current->data.str_val);
+                if (current->left) {
+                    printIndent(level + 1); printf("Argumentos:\n");
+                    printAST(current->left, level + 2);
+                }
+                break;
+                
+            case NODE_RETURN:
+                printf("[RETURN]\n");
+                if (current->left) printAST(current->left, level + 1);
+                break;
+
+            default:
+                printf("[NODO DESCONOCIDO %d]\n", current->kind);
         }
-    }
-    // Nota: los operadores (op_unario) son strings estáticos, no se liberan.
 
-    free(nodo);
+        // Avanzamos al siguiente nodo en la lista (hermanos/instrucciones siguientes)
+        // NOTA: Para IF, WHILE, BLOQUE, ya manejamos sus hijos internos. 
+        // Este next es para la siguiente instrucción al mismo nivel.
+        if (current->kind == NODE_BLOCK || current->kind == NODE_FOR) {
+            // Estos nodos usaron 'next' para sus hijos/contenido, 
+            // así que no iteramos aqui para evitar duplicados.
+            break; 
+        }
+        
+        current = current->next;
+    }
 }
 
-/* Función auxiliar para imprimir el árbol (para depuración) */
-void imprimir_arbol(ASTNode* nodo, int nivel) {
-    if (!nodo) return;
+/* ==========================================
+   GESTIÓN DE MEMORIA
+   ========================================== */
 
-    // Imprimir indentación
-    for (int i = 0; i < nivel; i++) printf("  ");
+void freeAST(ASTNode *node) {
+    if (!node) return;
 
-    switch (nodo->tipo) {
-        case NODO_PROGRAMA: printf("Programa\n"); break;
-        case NODO_DECLARACION_GLOBAL: printf("DeclaracionGlobal\n"); break;
-        case NODO_SETUP: printf("SetupDef\n"); break;
-        case NODO_FUNCION_DEF: printf("FuncionDef\n"); break;
-        case NODO_BLOQUE: printf("Bloque\n"); break;
-        case NODO_LISTA_INSTRUCCIONES: printf("ListaInstrucciones\n"); break;
-        case NODO_ASIGNACION: printf("Asignacion\n"); break;
-        case NODO_DECLARACION: printf("Declaracion\n"); break;
-        case NODO_IF: printf("If\n"); break;
-        case NODO_FOR: printf("For\n"); break;
-        case NODO_WHILE: printf("While\n"); break;
-        case NODO_DO_WHILE: printf("DoWhile\n"); break;
-        case NODO_LLAMADA_FUNCION: printf("LlamadaFuncion\n"); break;
-        case NODO_FUNCION_RESERVADA: printf("FuncReservada: %s\n", nodo->data.cadena); break;
-        case NODO_BINARIO_OP: printf("OpBinario (%s)\n", nodo->data.op_unario); break;
-        case NODO_UNARIO_OP: printf("OpUnario (%s)\n", nodo->data.op_unario); break;
-        case NODO_POSTFIX_OP: printf("OpPostfix (%s)\n", nodo->data.op_unario); break;
-        case NODO_IDENTIFICADOR: printf("Id: %s\n", nodo->data.cadena); break;
-        case NODO_NUMERO: printf("Num: %f\n", nodo->data.valor_num); break;
-        case NODO_CADENA: printf("Str: \"%s\"\n", nodo->data.cadena); break;
-        case NODO_BOOLEANO: printf("Bool: %s\n", nodo->data.valor_bool ? "true" : "false"); break;
-        case NODO_TIPO: printf("Tipo (%d)\n", nodo->data.tipo_dato); break;
-        case NODO_LISTA_PARAMETROS: printf("ListaParametros\n"); break;
-        case NODO_LISTA_ARGUMENTOS: printf("ListaArgumentos\n"); break;
-        case NODO_VACIO: printf("Vacio (λ)\n"); break;
-        default: printf("Nodo Desconocido (%d)\n", nodo->tipo); break;
-    }
-
-    // Recorrer hijos
-    if (nodo->hijo1) imprimir_arbol(nodo->hijo1, nivel + 1);
-    if (nodo->hijo2) imprimir_arbol(nodo->hijo2, nivel + 1);
-    if (nodo->hijo3) imprimir_arbol(nodo->hijo3, nivel + 1);
-    if (nodo->hijo4) imprimir_arbol(nodo->hijo4, nivel + 1);
+    // Liberar hijos primero
+    freeAST(node->left);
+    freeAST(node->right);
+    freeAST(node->extra);
     
-    // Recorrer listas
-    if (nodo->siguiente && nodo->siguiente->tipo != NODO_VACIO) {
-        for (int i = 0; i < nivel - 1; i++) printf("  "); // Indentación de lista
-        printf("  (siguiente) ->\n");
-        imprimir_arbol(nodo->siguiente, nivel);
+    // Si no es un bloque (que usa next como hijos), liberar el siguiente hermano
+    // Esto depende de cómo quieras limpiar la lista.
+    // Generalmente es seguro llamar recursivo a next.
+    freeAST(node->next);
+
+    // Liberar cadenas asignadas dinámicamente
+    if (node->type_name) free(node->type_name); // Ojo: si type_name viene de yylval.sval (strdup), liberar.
+    
+    // Liberar data.str_val si aplica (IDs, Operadores, Strings)
+    if (node->kind == NODE_ID || node->kind == NODE_CONST_STR || 
+        node->kind == NODE_BIN_OP || node->kind == NODE_UNARY_OP || 
+        node->kind == NODE_CALL_ROBOT || node->kind == NODE_FUNCTION || 
+        node->kind == NODE_VAR_DECL) {
+        
+        if (node->data.str_val) free(node->data.str_val);
     }
+
+    free(node);
 }

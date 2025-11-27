@@ -2,525 +2,298 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ast.h" // Nuestra definición del AST
+#include "ast.h"
 
-/* Prototipos */
-int yylex(void);
+/* Declaración externa de yylex y yyerror */
+int yylex();
 void yyerror(const char *s);
-extern int yylineno; // Variable de línea del lexer
+extern int yylineno;
 
-ASTNode *raiz_ast = NULL; // Raíz del árbol completo
+ASTNode *root = NULL;
 %}
 
 %union {
-    char* cadena;
-    double  numero;
-    int     booleano;
-    TipoDato tipo_dato;
-    ASTNode* nodo;
+    int ival;
+    char *sval;
+    struct ASTNode *node;
 }
 
-/* 1. Definición de Tokens (Sin cambios) */
-%token <cadena> ID_TOKEN
-%token <numero> NUMERO_TOKEN
-%token <cadena> CADENA_TOKEN
-%token <booleano> TRUE_TOKEN FALSE_TOKEN
+/* Tokens definidos en lexer.l */
+%token <sval> ID CADENA TYPE_INT TYPE_FLOAT TYPE_BOOL TYPE_CHAR TYPE_STRING TYPE_VOID
+%token <ival> NUMERO TRUE FALSE
+%token IF ELSE WHILE FOR DO RETURN
+%token TOKEN_MOVER TOKEN_RETROCEDER TOKEN_GIRAR_IZQ TOKEN_GIRAR_DER TOKEN_ESPERAR TOKEN_LEER_SENSOR TOKEN_PARAR
+%token EQ NEQ LE GE AND OR INC DEC
 
-%token TIPO_TOKEN_INT TIPO_TOKEN_BOOLEAN TIPO_TOKEN_FLOAT TIPO_TOKEN_CHAR TIPO_TOKEN_STRING
-%token IF_TOKEN ELSE_TOKEN FOR_TOKEN WHILE_TOKEN DO_TOKEN VOID_TOKEN
-%token SETUP_TOKEN
-%token MOVER_TOKEN GIRARIZQ_TOKEN GIRARDER_TOKEN LEERSENSOR_TOKEN PARAR_TOKEN REVERSA_TOKEN
-%token INICIO_TOKEN FIN_TOKEN
-%token PAREN_IZQ_TOKEN PAREN_DER_TOKEN
-%token CORCH_IZQ_TOKEN CORCH_DER_TOKEN
-%token PUNTOYCOMA_TOKEN COMA_TOKEN
+/* Tipos para los no-terminales */
+%type <node> programa elementos elemento funcion var_global lista_params param
+%type <node> bloque lista_instrucciones instruccion sentencia_basica resto_decl
+%type <node> if_stmt while_stmt do_while_stmt for_stmt
+%type <node> expresion exp_or exp_and exp_igualdad exp_rel exp_aditiva exp_mult exp_unaria exp_postfija exp_primaria
+%type <node> func_reservada lista_argumentos opcion_llamada
+%type <sval> tipo
 
-/* Operadores */
-%token ASIGN_TOKEN /* = */
-%token OR_TOKEN /* || */
-%token AND_TOKEN /* && */
-%token IGUAL_TOKEN /* == */ NO_IGUAL_TOKEN /* != */
-%token MENOR_TOKEN /* < */ MENOR_IGUAL_TOKEN /* <= */
-%token MAYOR_TOKEN /* > */ MAYOR_IGUAL_TOKEN /* >= */
-%token MAS_TOKEN /* + */ MENOS_TOKEN /* - */
-%token MULT_TOKEN /* * */ DIV_TOKEN /* / */ MOD_TOKEN /* % */
-%token NOT_TOKEN /* ! */
-%token INC_TOKEN /* ++ */ DEC_TOKEN /* -- */
+/* Precedencia */
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 
-/* 2. Definición de Tipos de Nodos (%type) */
-/* (Adaptado a la nueva GIC) */
-%type <nodo> Programa DeclaracionGlobal SetupDef FuncionDef
-%type <nodo> Bloque ListaInstrucciones Instruccion
-%type <nodo> Declaracion ListaDeclaradores Declarador DeclaracionInit
-%type <nodo> If IfPrima For ForInit ExpresionLogicaFor ForStep DoWhile While
-%type <nodo> ListaParametros ListaParametrosCont Parametro TipoRetorno
-%type <tipo_dato> Tipo
-%type <nodo> ListaArgumentos ListaArgumentosCont
-
-/* Nuevos tipos para la jerarquía de expresión explícita */
-%type <nodo> Expresion ExpLogicaOr ExpLogicaAnd ExpComparacion
-%type <nodo> ExpAditiva ExpMultiplicativa ExpUnaria ExpPostfija ExpPrimaria
-
-
-/* 3. JERARQUÍA DE PRECEDENCIA */
-/*
- * ¡ELIMINADA!
- * La precedencia ahora es manejada por las propias reglas de la gramática
- * (Camino A). No se necesita %left, %right, ni %prec.
- */
-
-%start Programa
 %%
 
-/* ------------------------------------ */
-/* 1. Nivel Superior                    */
-/* ------------------------------------ */
-Programa
-    : DeclaracionGlobal SetupDef FuncionDef
-    {
-        $$ = crear_nodo(NODO_PROGRAMA, @1.first_line);
-        $$->hijo1 = $1;
-        $$->hijo2 = $2;
-        $$->hijo3 = $3;
-        raiz_ast = $$;
-    }
+/* 1. NIVEL SUPERIOR */
+programa: 
+    elementos { root = $1; }
     ;
 
-DeclaracionGlobal
-    : /* lambda */
-    {
-        $$ = crear_nodo_vacio();
-    }
-    | DeclaracionGlobal Declaracion PUNTOYCOMA_TOKEN
-    {
-        $$ = enlazar_instruccion($1, $2);
-    }
-    | DeclaracionGlobal Expresion PUNTOYCOMA_TOKEN
-    {
-        $$ = enlazar_instruccion($1, $2);
-    }
-    ;
+elementos: 
+    elemento elementos { $$ = $1; $$->next = $2; }
+  | /* vacio */ { $$ = NULL; }
+  ;
 
-SetupDef
-    : VOID_TOKEN SETUP_TOKEN PAREN_IZQ_TOKEN PAREN_DER_TOKEN Bloque
-    {
-        $$ = crear_nodo(NODO_SETUP, @1.first_line);
-        $$->hijo1 = crear_nodo_tipo(TIPO_VOID, @1.first_line);
-        $$->hijo2 = $5;
-    }
-    ;
-    
-/* ------------------------------------ */
-/* 2. Bloques y Lista de Instrucciones  */
-/* ------------------------------------ */
-Bloque
-    : INICIO_TOKEN ListaInstrucciones FIN_TOKEN
-    {
-        $$ = crear_nodo(NODO_BLOQUE, @1.first_line);
-        $$->hijo1 = $2;
-    }
-    ;
+elemento:
+    funcion { $$ = $1; }
+  | var_global { $$ = $1; }
+  ;
 
-/* GIC: ListaInstrucciones -> ListaInstrucciones Instruccion | λ */
-ListaInstrucciones
-    : /* lambda */
-    {
-        $$ = crear_nodo_vacio();
-    }
-    | ListaInstrucciones Instruccion
-    {
-        $$ = enlazar_instruccion($1, $2);
-    }
-    ;
+/* Regla para tipos de datos */
+tipo:
+    TYPE_INT    { $$ = strdup("int"); }
+  | TYPE_FLOAT  { $$ = strdup("float"); }
+  | TYPE_BOOL   { $$ = strdup("boolean"); }
+  | TYPE_CHAR   { $$ = strdup("char"); }
+  | TYPE_STRING { $$ = strdup("string"); }
+  | TYPE_VOID   { $$ = strdup("void"); }
+  ;
 
-/* ------------------------------------ */
-/* 3. Instrucciones                     */
-/* ------------------------------------ */
-Instruccion
-    : Declaracion PUNTOYCOMA_TOKEN    { $$ = $1; }
-    | Expresion PUNTOYCOMA_TOKEN      { $$ = $1; }
-    | If                              { $$ = $1; }
-    | For                             { $$ = $1; }
-    | While                           { $$ = $1; }
-    | DoWhile                         { $$ = $1; }
-    | Bloque                          { $$ = $1; }
-    ;
+var_global:
+    tipo ID ';' { 
+        $$ = newASTNode(NODE_VAR_DECL); 
+        $$->type_name = $1; 
+        $$->data.str_val = $2; 
+    }
+  | tipo ID '=' expresion ';' {
+        $$ = newASTNode(NODE_VAR_DECL);
+        $$->type_name = $1;
+        $$->data.str_val = $2;
+        $$->left = $4; 
+    }
+  ;
 
-/* ------------------------------------ */
-/* 4. Sentencias Simples (Corregida)    */
-/* ------------------------------------ */
+funcion:
+    tipo ID '(' lista_params ')' bloque {
+        $$ = newASTNode(NODE_FUNCTION);
+        $$->type_name = $1;       
+        $$->data.str_val = $2;    
+        $$->left = $4;            
+        $$->right = $6;           
+    }
+  ;
 
-/* GIC: Declaracion -> Tipo ListaDeclaradores */
-Declaracion
-    : Tipo ListaDeclaradores
-    {
-        $$ = crear_nodo(NODO_DECLARACION, @1.first_line);
-        $$->hijo1 = crear_nodo_tipo($1, @1.first_line);
-        $$->hijo2 = $2; /* $2 es la lista de nodos Declarador */
-    }
-    ;
+lista_params:
+    param ',' lista_params { $$ = $1; $$->next = $3; }
+  | param { $$ = $1; }
+  | /* vacio */ { $$ = NULL; }
+  ;
 
-/* GIC: ListaDeclaradores -> ListaDeclaradores , Declarador | Declarador */
-ListaDeclaradores
-    : Declarador
-    {
-        $$ = $1;
+param:
+    tipo ID {
+        $$ = newASTNode(NODE_VAR_DECL);
+        $$->type_name = $1;
+        $$->data.str_val = $2;
     }
-    | ListaDeclaradores COMA_TOKEN Declarador
-    {
-        $$ = enlazar_nodos($1, $3); /* enlazar_nodos es de ast.c */
-    }
-    ;
+  ;
 
-/* GIC: Declarador -> id_token DeclaracionInit */
-Declarador
-    : ID_TOKEN DeclaracionInit
-    {
-        /* Creamos un nodo 'Declaracion' por cada ID */
-        $$ = crear_nodo(NODO_DECLARACION, @1.first_line);
-        $$->hijo1 = crear_nodo_hoja_id($1, @1.first_line);
-        $$->hijo2 = $2;
+/* 2. BLOQUES E INSTRUCCIONES */
+bloque:
+    '{' lista_instrucciones '}' {
+        $$ = newASTNode(NODE_BLOCK);
+        $$->next = $2; 
     }
-    ;
+  ;
 
-/* GIC: DeclaracionInit -> = Expresion | λ */
-DeclaracionInit
-    : ASIGN_TOKEN Expresion { $$ = $2; }
-    | /* lambda */          { $$ = crear_nodo_vacio(); }
-    ;
-    
-/* ------------------------------------ */
-/* 5. Estructuras de Control            */
-/* ------------------------------------ */
-/* (Sin cambios, ya usaban 'Expresion') */
-If
-    : IF_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque IfPrima
-    {
-        $$ = crear_nodo(NODO_IF, @1.first_line);
-        $$->hijo1 = $3; // Expresion (condición)
-        $$->hijo2 = $5; // Bloque (then)
-        $$->hijo3 = $6; // Bloque (else) o Vacio
-    }
-    ;
-IfPrima
-    : ELSE_TOKEN Bloque   { $$ = $2; }
-    | /* lambda */        { $$ = crear_nodo_vacio(); }
-    ;
-For
-    : FOR_TOKEN PAREN_IZQ_TOKEN ForInit PUNTOYCOMA_TOKEN ExpresionLogicaFor PUNTOYCOMA_TOKEN ForStep PAREN_DER_TOKEN Bloque
-    {
-        $$ = crear_nodo(NODO_FOR, @1.first_line);
-        $$->hijo1 = $3;
-        $$->hijo2 = $5;
-        $$->hijo3 = $7;
-        $$->hijo4 = $9;
-    }
-    ;
-ForInit
-    : Declaracion   { $$ = $1; }
-    | Expresion     { $$ = $1; } /* Sigue usando la regla Expresion de alto nivel */
-    | /* lambda */  { $$ = crear_nodo_vacio(); }
-    ;
-ExpresionLogicaFor
-    : Expresion     { $$ = $1; }
-    | /* lambda */  { $$ = crear_nodo_vacio(); }
-    ;
-ForStep
-    : Expresion     { $$ = $1; }
-    | /* lambda */  { $$ = crear_nodo_vacio(); }
-    ;
-DoWhile
-    : DO_TOKEN INICIO_TOKEN Bloque FIN_TOKEN WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN PUNTOYCOMA_TOKEN
-    {
-        $$ = crear_nodo(NODO_DO_WHILE, @1.first_line);
-        $$->hijo1 = $3;
-        $$->hijo2 = $7;
-    }
-    ;
-While
-    : WHILE_TOKEN PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN Bloque
-    {
-        $$ = crear_nodo(NODO_WHILE, @1.first_line);
-        $$->hijo1 = $3;
-        $$->hijo2 = $5;
-    }
-    ;
-/* ------------------------------------ */
-/* 6. Definición de Funciones (Corregida)*/
-/* ------------------------------------ */
-FuncionDef
-    : TipoRetorno ID_TOKEN PAREN_IZQ_TOKEN ListaParametros PAREN_DER_TOKEN Bloque
-    {
-        $$ = crear_nodo(NODO_FUNCION_DEF, @1.first_line);
-        $$->hijo1 = $1;
-        $$->hijo2 = crear_nodo_hoja_id($2, @2.first_line);
-        $$->hijo3 = $4;
-        $$->hijo4 = $6;
-    }
-    ;
+lista_instrucciones:
+    instruccion lista_instrucciones { $$ = $1; if($1 != NULL) $$->next = $2; }
+  | /* vacio */ { $$ = NULL; }
+  ;
 
-/* GIC: ListaParametros -> ListaParametros , Parametro | Parametro | λ */
-/* Implementado como una lista opcional (recursiva izq.) */
-ListaParametros
-    : /* lambda */
-    { 
-        $$ = crear_nodo_vacio(); 
-    }
-    | ListaParametrosCont
-    {
-        $$ = $1;
-    }
-    ;
-ListaParametrosCont
-    : Parametro
-    {
-        $$ = $1;
-    }
-    | ListaParametrosCont COMA_TOKEN Parametro
-    {
-        $$ = enlazar_parametro($1, $3);
-    }
-    ;
+instruccion:
+    bloque { $$ = $1; }
+  | if_stmt { $$ = $1; }
+  | while_stmt { $$ = $1; }
+  | do_while_stmt { $$ = $1; }
+  | for_stmt { $$ = $1; }
+  | RETURN expresion ';' { $$ = newUnaryNode("return", $2); $$->kind = NODE_RETURN; }
+  | RETURN ';' { $$ = newASTNode(NODE_RETURN); }
+  | sentencia_basica ';' { $$ = $1; }
+  ;
 
-Parametro
-    : Tipo ID_TOKEN
-    {
-        $$ = crear_nodo(NODO_DECLARACION, @1.first_line);
-        $$->hijo1 = crear_nodo_tipo($1, @1.first_line);
-        $$->hijo2 = crear_nodo_hoja_id($2, @2.first_line);
+sentencia_basica:
+    tipo ID resto_decl {
+        $$ = newASTNode(NODE_VAR_DECL);
+        $$->type_name = $1;
+        $$->data.str_val = $2;
+        $$->left = $3;
     }
-    ;
-TipoRetorno
-    : VOID_TOKEN { $$ = crear_nodo_tipo(TIPO_VOID, @1.first_line); }
-    | Tipo       { $$ = crear_nodo_tipo($1, @1.first_line); }
-    ;
-Tipo
-    : TIPO_TOKEN_INT      { $$ = TIPO_INT; }
-    | TIPO_TOKEN_BOOLEAN  { $$ = TIPO_BOOLEAN; }
-    | TIPO_TOKEN_FLOAT    { $$ = TIPO_FLOAT; }
-    | TIPO_TOKEN_CHAR     { $$ = TIPO_CHAR; }
-    | TIPO_TOKEN_STRING   { $$ = TIPO_STRING; }
-    ;
-/* ------------------------------------ */
-/* 7. Lista de Argumentos (Corregida)   */
-/* ------------------------------------ */
+  | expresion { $$ = $1; }
+  ;
 
-/* GIC: ListaArgumentos -> ListaArgumentos , Expresion | Expresion | λ */
-ListaArgumentos
-    : /* lambda */
-    {
-        $$ = crear_nodo_vacio();
-    }
-    | ListaArgumentosCont
-    {
-        $$ = $1;
-    }
-    ;
-ListaArgumentosCont
-    : Expresion
-    {
-        $$ = $1;
-    }
-    | ListaArgumentosCont COMA_TOKEN Expresion
-    {
-        $$ = enlazar_argumento($1, $3);
-    }
-    ;
-/* ------------------------------------ */
-/* 8. JERARQUÍA DE EXPRESIÓN (NUEVA)    */
-/* ------------------------------------ */
+resto_decl:
+    '=' expresion { $$ = $2; }
+  | /* vacio */ { $$ = NULL; }
+  ;
 
-/* Nivel 1: Asignación (=) */
-Expresion
-    : ExpLogicaOr ASIGN_TOKEN Expresion
-    {
-        $$ = crear_nodo(NODO_ASIGNACION, @2.first_line);
-        $$->hijo1 = $1;
-        $$->hijo2 = $3;
+/* 3. ESTRUCTURAS DE CONTROL */
+if_stmt:
+    IF '(' expresion ')' bloque %prec LOWER_THAN_ELSE {
+        $$ = newASTNode(NODE_IF);
+        $$->left = $3;  
+        $$->right = $5; 
     }
-    | ExpLogicaOr
-    {
-        $$ = $1;
+  | IF '(' expresion ')' bloque ELSE bloque {
+        $$ = newASTNode(NODE_IF);
+        $$->left = $3;  
+        $$->right = $5; 
+        $$->extra = $7; 
     }
-    ;
+  ;
 
-/* Nivel 2: OR (||) */
-ExpLogicaOr
-    : ExpLogicaOr OR_TOKEN ExpLogicaAnd
-    {
-        $$ = crear_nodo_binario("||", $1, $3, @2.first_line);
+while_stmt:
+    WHILE '(' expresion ')' bloque {
+        $$ = newASTNode(NODE_WHILE);
+        $$->left = $3;
+        $$->right = $5;
     }
-    | ExpLogicaAnd
-    {
-        $$ = $1;
-    }
-    ;
+  ;
 
-/* Nivel 3: AND (&&) */
-ExpLogicaAnd
-    : ExpLogicaAnd AND_TOKEN ExpComparacion
-    {
-        $$ = crear_nodo_binario("&&", $1, $3, @2.first_line);
+do_while_stmt:
+    DO bloque WHILE '(' expresion ')' ';' {
+        $$ = newASTNode(NODE_DO_WHILE);
+        $$->left = $5;
+        $$->right = $2;
     }
-    | ExpComparacion
-    {
-        $$ = $1;
-    }
-    ;
+  ;
 
-/* Nivel 4: Comparación (==, !=, <, <=, >, >=) */
-ExpComparacion
-    : ExpComparacion IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("==", $1, $3, @2.first_line);
+for_stmt:
+    FOR '(' sentencia_basica ';' expresion ';' expresion ')' bloque {
+        $$ = newASTNode(NODE_FOR);
+        $$->left = $3;   
+        $$->right = $5;  
+        $$->extra = $7;  
+        $$->next = $9;   
     }
-    | ExpComparacion NO_IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("!=", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MENOR_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("<", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MENOR_IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario("<=", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MAYOR_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario(">", $1, $3, @2.first_line);
-    }
-    | ExpComparacion MAYOR_IGUAL_TOKEN ExpAditiva
-    {
-        $$ = crear_nodo_binario(">=", $1, $3, @2.first_line);
-    }
-    | ExpAditiva
-    {
-        $$ = $1;
-    }
-    ;
+  ;
 
-/* Nivel 5: Adición/Sustracción (+, -) */
-ExpAditiva
-    : ExpAditiva MAS_TOKEN ExpMultiplicativa
-    {
-        $$ = crear_nodo_binario("+", $1, $3, @2.first_line);
+/* 5. JERARQUÍA DE EXPRESIONES */
+expresion:
+    exp_or { $$ = $1; }
+  | exp_unaria '=' expresion { 
+        $$ = newASTNode(NODE_ASSIGN);
+        $$->left = $1;
+        $$->right = $3;
     }
-    | ExpAditiva MENOS_TOKEN ExpMultiplicativa
-    {
-        $$ = crear_nodo_binario("-", $1, $3, @2.first_line);
-    }
-    | ExpMultiplicativa
-    {
-        $$ = $1;
-    }
-    ;
+  ;
 
-/* Nivel 6: Multiplicación/División (*, /, %) */
-ExpMultiplicativa
-    : ExpMultiplicativa MULT_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_binario("*", $1, $3, @2.first_line);
-    }
-    | ExpMultiplicativa DIV_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_binario("/", $1, $3, @2.first_line);
-    }
-    | ExpMultiplicativa MOD_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_binario("%", $1, $3, @2.first_line);
-    }
-    | ExpUnaria
-    {
-        $$ = $1;
-    }
-    ;
+exp_or:
+    exp_or OR exp_and { $$ = newBinaryNode("||", $1, $3); }
+  | exp_and { $$ = $1; }
+  ;
 
-/* Nivel 7: Prefijos Unarios (!, -, +, ++, --) */
-ExpUnaria
-    : NOT_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_unario("!", $2, @1.first_line);
-    }
-    | MENOS_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_unario("-", $2, @1.first_line);
-    }
-    | MAS_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_unario("+", $2, @1.first_line);
-    }
-    | INC_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_unario("++", $2, @1.first_line);
-    }
-    | DEC_TOKEN ExpUnaria
-    {
-        $$ = crear_nodo_unario("--", $2, @1.first_line);
-    }
-    | ExpPostfija
-    {
-        $$ = $1;
-    }
-    ;
+exp_and:
+    exp_and AND exp_igualdad { $$ = newBinaryNode("&&", $1, $3); }
+  | exp_igualdad { $$ = $1; }
+  ;
 
-/* Nivel 8: Postfijos (llamada, array, ++, --) */
-ExpPostfija
-    : ExpPrimaria
-    {
-        $$ = $1;
-    }
-    | ExpPostfija PAREN_IZQ_TOKEN ListaArgumentos PAREN_DER_TOKEN
-    {
-        $$ = crear_nodo(NODO_LLAMADA_FUNCION, @2.first_line);
-        $$->hijo1 = $1;
-        $$->hijo2 = $3;
-    }
-    | ExpPostfija CORCH_IZQ_TOKEN Expresion CORCH_DER_TOKEN
-    {
-        $$ = crear_nodo_binario("[]", $1, $3, @2.first_line);
-    }
-    | ExpPostfija INC_TOKEN
-    {
-        $$ = crear_nodo_postfix($1, "++", @2.first_line);
-    }
-    | ExpPostfija DEC_TOKEN
-    {
-        $$ = crear_nodo_postfix($1, "--", @2.first_line);
-    }
-    ;
+exp_igualdad:
+    exp_igualdad EQ exp_rel { $$ = newBinaryNode("==", $1, $3); }
+  | exp_igualdad NEQ exp_rel { $$ = newBinaryNode("!=", $1, $3); }
+  | exp_rel { $$ = $1; }
+  ;
 
-/* Nivel 9: Base (Primarios) */
-ExpPrimaria
-    : ID_TOKEN
-        { $$ = crear_nodo_hoja_id($1, @1.first_line); }
-    | NUMERO_TOKEN
-        { $$ = crear_nodo_hoja_num($1, @1.first_line); }
-    | CADENA_TOKEN
-        { $$ = crear_nodo_hoja_cadena($1, @1.first_line); }
-    | TRUE_TOKEN
-        { $$ = crear_nodo_hoja_bool(1, @1.first_line); }
-    | FALSE_TOKEN
-        { $$ = crear_nodo_hoja_bool(0, @1.first_line); }
-    | PAREN_IZQ_TOKEN Expresion PAREN_DER_TOKEN /* Paréntesis para agrupar */
-        { $$ = $2; }
-    /* Funciones reservadas */
-    | MOVER_TOKEN
-        { $$ = crear_nodo_funcion_reservada("mover", @1.first_line); }
-    | GIRARIZQ_TOKEN
-        { $$ = crear_nodo_funcion_reservada("girarIzq", @1.first_line); }
-    | GIRARDER_TOKEN
-        { $$ = crear_nodo_funcion_reservada("girarDer", @1.first_line); }
-    | LEERSENSOR_TOKEN
-        { $$ = crear_nodo_funcion_reservada("leerSensor", @1.first_line); }
-    | PARAR_TOKEN
-        { $$ = crear_nodo_funcion_reservada("parar", @1.first_line); }
-    | REVERSA_TOKEN
-        { $$ = crear_nodo_funcion_reservada("reversa", @1.first_line); }
-    ;
+exp_rel:
+    exp_rel '<' exp_aditiva { $$ = newBinaryNode("<", $1, $3); }
+  | exp_rel LE exp_aditiva  { $$ = newBinaryNode("<=", $1, $3); }
+  | exp_rel '>' exp_aditiva { $$ = newBinaryNode(">", $1, $3); }
+  | exp_rel GE exp_aditiva  { $$ = newBinaryNode(">=", $1, $3); }
+  | exp_aditiva { $$ = $1; }
+  ;
+
+exp_aditiva:
+    exp_aditiva '+' exp_mult { $$ = newBinaryNode("+", $1, $3); }
+  | exp_aditiva '-' exp_mult { $$ = newBinaryNode("-", $1, $3); }
+  | exp_mult { $$ = $1; }
+  ;
+
+exp_mult:
+    exp_mult '*' exp_unaria { $$ = newBinaryNode("*", $1, $3); }
+  | exp_mult '/' exp_unaria { $$ = newBinaryNode("/", $1, $3); }
+  | exp_mult '%' exp_unaria { $$ = newBinaryNode("%", $1, $3); }
+  | exp_unaria { $$ = $1; }
+  ;
+
+exp_unaria:
+    '!' exp_unaria { $$ = newUnaryNode("!", $2); }
+  | '-' exp_unaria { $$ = newUnaryNode("-", $2); }
+  | INC exp_unaria { $$ = newUnaryNode("++pre", $2); }
+  | DEC exp_unaria { $$ = newUnaryNode("--pre", $2); }
+  | exp_postfija { $$ = $1; }
+  ;
+
+exp_postfija:
+    exp_primaria { $$ = $1; }
+  | exp_postfija INC { $$ = newUnaryNode("post++", $1); }
+  | exp_postfija DEC { $$ = newUnaryNode("post--", $1); }
+  ;
+
+exp_primaria:
+    ID opcion_llamada {
+        if ($2 == NULL) { 
+             $$ = newIDNode($1);
+        } else { 
+             $$ = newASTNode(NODE_CALL_FUNC);
+             $$->data.str_val = $1;
+             $$->left = $2; 
+        }
+    }
+  | NUMERO { $$ = newIntNode($1); }
+  | CADENA { 
+        $$ = newASTNode(NODE_CONST_STR); 
+        $$->data.str_val = $1; 
+    }
+  | TRUE { 
+        $$ = newASTNode(NODE_CONST_BOOL); 
+        $$->data.int_val = 1; 
+    }
+  | FALSE { 
+        $$ = newASTNode(NODE_CONST_BOOL); 
+        $$->data.int_val = 0; 
+    }
+  | '(' expresion ')' { $$ = $2; }
+  | func_reservada { $$ = $1; }
+  ;
+
+opcion_llamada:
+    '(' lista_argumentos ')' { $$ = $2; }
+  | /* vacio */ { $$ = NULL; }
+  ;
+
+lista_argumentos:
+    expresion ',' lista_argumentos { $$ = $1; $$->next = $3; }
+  | expresion { $$ = $1; }
+  | /* vacio */ { $$ = NULL; }
+  ;
+
+/* 6. FUNCIONES RESERVADAS (ROBOT) */
+func_reservada:
+    TOKEN_MOVER '(' lista_argumentos ')' { $$ = newRobotNode("mover", $3); }
+  | TOKEN_RETROCEDER '(' lista_argumentos ')' { $$ = newRobotNode("retroceder", $3); }
+  | TOKEN_GIRAR_IZQ '(' lista_argumentos ')' { $$ = newRobotNode("girarIzq", $3); }
+  | TOKEN_GIRAR_DER '(' lista_argumentos ')' { $$ = newRobotNode("girarDer", $3); }
+  | TOKEN_ESPERAR '(' lista_argumentos ')' { $$ = newRobotNode("esperar", $3); }
+  | TOKEN_LEER_SENSOR '(' lista_argumentos ')' { $$ = newRobotNode("leerSensor", $3); }
+  | TOKEN_PARAR '(' lista_argumentos ')' { $$ = newRobotNode("parar", $3); }
+  ;
+
 %%
 
-/* Función de reporte de errores */
 void yyerror(const char *s) {
-    fprintf(stderr, "Error Sintáctico en línea %d: %s\n", yylineno, s);
+    fprintf(stderr, "Error de sintaxis en linea %d: %s\n", yylineno, s);
 }

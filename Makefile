@@ -1,47 +1,35 @@
-# Nombre del compilador
-CC = gcc
-# Opciones del compilador (g = debug symbols)
-CFLAGS = -g -Wall -Wno-unused-function
-
-# Nombres de los ejecutables de Flex y Bison
-FLEX = flex
-BISON = bison
+# Makefile para el Compilador del Robot
 
 # Nombre del ejecutable final
-TARGET = mi_compilador
+TARGET = compiler
 
-# Archivos fuente .c
-# parser.tab.c y lexer.yy.c son generados por Bison y Flex
-SOURCES = main.c ast.c semantic.c parser.tab.c lexer.yy.c
-# Archivos de cabecera .h
-HEADERS = ast.h semantic.h parser.tab.h
-# Archivos objeto .o
-OBJECTS = $(SOURCES:.c=.o)
+# Compilador y Flags
+CC = gcc
+CFLAGS = -Wall -g
 
+# Archivos fuente generados y estáticos
+SOURCES = main.c ast.c semantic.c codegen.c y.tab.c lex.yy.c
+HEADERS = ast.h semantic.h codegen.h y.tab.h
 
-# Regla principal: construir el ejecutable
+# Regla principal (por defecto)
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) -lm
+# Paso 1: Generar el Parser con Bison (crea y.tab.c y y.tab.h)
+y.tab.c y.tab.h: parser.y
+	bison -d -y parser.y -Wcounterexamples
 
-# Regla para generar el parser (de .y a .c y .h)
-# -d: genera el archivo .h (parser.tab.h)
-parser.tab.c parser.tab.h: parser.y ast.h
-	$(BISON) -d -Wcounterexamples --report=all parser.y
+# Paso 2: Generar el Lexer con Flex (crea lex.yy.c)
+lex.yy.c: lexer.l y.tab.h
+	flex lexer.l
 
-# Regla para generar el lexer (de .l a .c)
-lexer.yy.c: lexer.l parser.tab.h
-	$(FLEX) -o lexer.yy.c lexer.l
+# Paso 3: Compilar todo el proyecto
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) $(SOURCES) -o $(TARGET)
 
-# Regla genérica para compilar archivos .c a .o
-%.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Regla para limpiar los archivos generados
+# Regla para limpiar archivos generados
 clean:
-	rm -f $(TARGET) $(OBJECTS) parser.tab.c parser.tab.h lexer.yy.c
+	rm -f $(TARGET) y.tab.c y.tab.h lex.yy.c codigo.txt
 
-# Regla para ejecutar (requiere un archivo 'test.txt')
-run: all
+# Regla de prueba (opcional)
+run: $(TARGET)
 	./$(TARGET) test.txt

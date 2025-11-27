@@ -3,20 +3,10 @@
 
 #include "ast.h"
 
-typedef struct Simbolo {
-    char* nombre;
-    TipoDato tipo;
-    int ambito;
-    int linea;
-    
-    /* --- NUEVO CAMPO --- */
-    /* Guarda el puntero al AST de la lista de parámetros (NODO_DECLARACION) */
-    struct ASTNode* parametros; 
-    
-} Simbolo;
+/* Inicia el análisis semántico sobre el árbol comenzando en 'root' */
+void semantic_analysis(ASTNode *root);
 
+/* Retorna el número de errores encontrados */
+int get_semantic_errors();
 
-/* Función principal del analizador */
-int analizar_semantica(ASTNode* raiz);
-
-#endif // SEMANTIC_H
+#endif

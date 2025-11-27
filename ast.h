@@ -1,3 +1,7 @@
+/* ==========================================
+   ast.h - Definiciones del Árbol de Sintaxis Abstracta
+   ========================================== */
+
 #ifndef AST_H
 #define AST_H
 
@@ -5,99 +9,70 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Enum para los tipos de nodos del AST */
+/* Tipos de Nodos */
 typedef enum {
-    /* Nodos de Programa y Estructura */
-    NODO_PROGRAMA,
-    NODO_DECLARACION_GLOBAL,
-    NODO_SETUP,
-    NODO_FUNCION_DEF,
-    NODO_BLOQUE,
-    NODO_LISTA_INSTRUCCIONES,
-
-    /* Nodos de Instrucciones */
-    NODO_DECLARACION,
-    NODO_IF,
-    NODO_FOR,
-    NODO_WHILE,
-    NODO_DO_WHILE,
-    NODO_LLAMADA_FUNCION, // Se usa en ExpPostfix
-    NODO_FUNCION_RESERVADA,
-
-    /* Nodos de Expresión (Operadores) */
-    NODO_ASIGNACION,
-    NODO_BINARIO_OP, // Para +, -, *, /, %, &&, ||, ==, !=, <, <=, >, >=
-    NODO_UNARIO_OP,  // Para !, -, +, ++, -- (prefijo)
-    NODO_POSTFIX_OP, // Para ++, -- (postfijo)
+    NODE_PROGRAM,
+    NODE_FUNCTION,      /* Declaración de función */
+    NODE_VAR_DECL,      /* Declaración de variable */
+    NODE_BLOCK,         /* Bloque de código { ... } */
     
-    /* Nodos de Expresión (Primitivos) */
-    NODO_IDENTIFICADOR,
-    NODO_NUMERO,
-    NODO_CADENA,
-    NODO_BOOLEANO,
+    /* Sentencias de Control */
+    NODE_IF,
+    NODE_WHILE,
+    NODE_DO_WHILE,
+    NODE_FOR,
+    NODE_RETURN,
+    
+    /* Operaciones y Asignaciones */
+    NODE_ASSIGN,        /* = */
+    NODE_BIN_OP,        /* +, -, *, /, &&, ||, ==, !=, <, etc. */
+    NODE_UNARY_OP,      /* -, !, ++, -- (prefijo/postfijo) */
+    
+    /* Valores y Referencias */
+    NODE_CONST_INT,
+    NODE_CONST_FLOAT,
+    NODE_CONST_BOOL,
+    NODE_CONST_STR,
+    NODE_ID,            /* Uso de variable */
+    
+    /* Especiales Robot */
+    NODE_CALL_ROBOT,    /* token_mover, token_girar, etc. */
+    NODE_CALL_FUNC      /* Llamada a función de usuario */
+} NodeKind;
 
-    /* Nodos Auxiliares */
-    NODO_TIPO,
-    NODO_LISTA_PARAMETROS,
-    NODO_LISTA_ARGUMENTOS,
-    NODO_VACIO // Para producciones lambda (λ)
-} TipoNodo;
-
-/* Enum para los tipos de datos del lenguaje */
-typedef enum {
-    TIPO_INT,
-    TIPO_BOOLEAN,
-    TIPO_FLOAT,
-    TIPO_CHAR,
-    TIPO_STRING,
-    TIPO_VOID,
-    TIPO_DESCONOCIDO // Para errores semánticos
-} TipoDato;
-
-/* Estructura principal de un nodo del AST */
+/* Estructura del Nodo */
 typedef struct ASTNode {
-    TipoNodo tipo;
-    struct ASTNode *hijo1;     // Hijo izquierdo, o única rama (ej. unario)
-    struct ASTNode *hijo2;     // Hijo derecho, o segunda rama (ej. if)
-    struct ASTNode *hijo3;     // Tercera rama (ej. for, if-else)
-    struct ASTNode *hijo4;     // Cuarta rama (ej. for)
-    struct ASTNode *siguiente; // Para listas (Instrucciones, Parámetros, etc.)
+    NodeKind kind;      /* Tipo de nodo */
     
-    /* Datos específicos del nodo */
+    /* Datos del nodo */
+    char *type_name;    /* "int", "void", etc. (para declaraciones) */
+    
     union {
-        char *cadena;       // Para id, cadena_token
-        double valor_num;   // Para numero_token
-        int valor_bool;     // Para true/false
-        TipoDato tipo_dato; // Para NODO_TIPO
-        char op_binario;    // '+', '*', etc. (simplificado)
-        char *op_unario;    // "!", "++", etc.
+        int int_val;
+        float float_val;
+        char *str_val;  /* Para IDs, cadenas o el operador (+, -, mover) */
     } data;
+
+    /* Estructura de árbol */
+    struct ASTNode *left;
+    struct ASTNode *right;
+    struct ASTNode *extra; /* Para el 3er componente del for o el 'else' del if */
     
-    int linea; // Para reportar errores
+    /* Estructura de lista (para sentencias secuenciales o argumentos) */
+    struct ASTNode *next; 
+    
 } ASTNode;
 
-/* Funciones para crear nodos del AST (la "fábrica" de nodos) */
-ASTNode* crear_nodo(TipoNodo tipo, int linea);
-ASTNode* crear_nodo_vacio();
-ASTNode* crear_nodo_hoja_id(char* nombre, int linea);
-ASTNode* crear_nodo_hoja_num(double valor, int linea);
-ASTNode* crear_nodo_hoja_cadena(char* valor, int linea);
-ASTNode* crear_nodo_hoja_bool(int valor, int linea);
-ASTNode* crear_nodo_tipo(TipoDato tipo, int linea);
-ASTNode* crear_nodo_unario(char* op, ASTNode* hijo, int linea);
-ASTNode* crear_nodo_binario(char* op, ASTNode* izq, ASTNode* der, int linea);
-ASTNode* crear_nodo_postfix(ASTNode* hijo, char* op, int linea);
-ASTNode* crear_nodo_funcion_reservada(char* nombre, int linea);
+/* Constructores */
+ASTNode* newASTNode(NodeKind kind);
+ASTNode* newBinaryNode(char *op, ASTNode *left, ASTNode *right);
+ASTNode* newUnaryNode(char *op, ASTNode *child);
+ASTNode* newIntNode(int val);
+ASTNode* newIDNode(char *name);
+ASTNode* newRobotNode(char *action, ASTNode *args);
 
-/* Funciones para enlazar listas */
-ASTNode* enlazar_instruccion(ASTNode* lista, ASTNode* instruccion);
-ASTNode* enlazar_parametro(ASTNode* lista, ASTNode* parametro);
-ASTNode* enlazar_argumento(ASTNode* lista, ASTNode* argumento);
-ASTNode* enlazar_declaracion(ASTNode* lista, ASTNode* declaracion_init);
-ASTNode* enlazar_nodos(ASTNode* lista, ASTNode* item);  
+/* Utilidades */
+void freeAST(ASTNode *node);
+void printAST(ASTNode *node, int level);
 
-/* Funciones del Árbol */
-void liberar_arbol(ASTNode* nodo);
-void imprimir_arbol(ASTNode* nodo, int nivel); // Para depuración
-
-#endif // AST_H
+#endif

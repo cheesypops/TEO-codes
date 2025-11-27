@@ -1,0 +1,149 @@
+/* ==========================================
+   GRAMÁTICA DEL LENGUAJE (LL1 - ARDUINO LIKE)
+   ========================================== */
+
+/* 1. NIVEL SUPERIOR */
+Programa            -> Elemento Programa
+                     | ε
+
+Elemento            -> Tipo 'id' RestoElemento
+
+/* Factorización para decidir entre Variable Global o Función */
+RestoElemento       -> ';' 
+                     | '=' Expresion ';' 
+                     | '(' ListaParametros ')' Bloque
+
+/* 2. BLOQUES E INSTRUCCIONES */
+Bloque              -> '{' ListaInstrucciones '}'
+
+ListaInstrucciones  -> Instruccion ListaInstrucciones
+                     | ε
+
+Instruccion         -> Bloque
+                     | If
+                     | While
+                     | For
+                     | DoWhile
+                     | 'return' RestoReturn
+                     | SentenciaBasica ';'
+
+RestoReturn         -> Expresion ';'
+                     | ';'
+
+/* Factorización para decidir entre Declaración Local o Expresión/Asignación */
+SentenciaBasica     -> Tipo 'id' RestoDeclaracionLocal
+                     | Expresion
+
+RestoDeclaracionLocal -> '=' Expresion
+                       | ε
+
+/* 3. ESTRUCTURAS DE CONTROL */
+If                  -> 'if' '(' Expresion ')' Bloque IfPrima
+IfPrima             -> 'else' Bloque
+                     | ε
+
+While               -> 'while' '(' Expresion ')' Bloque
+
+DoWhile             -> 'do' Bloque 'while' '(' Expresion ')' ';'
+
+For                 -> 'for' '(' ForInit ';' ExpresionOpt ';' ExpresionOpt ')' Bloque
+
+ForInit             -> Tipo 'id' RestoDeclaracionLocal
+                     | Expresion
+                     | ε
+
+ExpresionOpt        -> Expresion
+                     | ε
+
+/* 4. TIPOS Y PARÁMETROS */
+Tipo                -> 'int' | 'boolean' | 'float' | 'char' | 'string' | 'void'
+
+ListaParametros     -> Parametro ListaParametrosPrima
+                     | ε
+ListaParametrosPrima-> ',' Parametro ListaParametrosPrima
+                     | ε
+
+Parametro           -> Tipo 'id'
+
+/* 5. JERARQUÍA DE EXPRESIONES (Recursividad Derecha para LL1) */
+
+/* Nivel 0: Asignación */
+Expresion           -> ExpOr ExpAsignacionPrima
+ExpAsignacionPrima  -> '=' Expresion
+                     | ε
+
+/* Nivel 1: Lógico OR */
+ExpOr               -> ExpAnd ExpOrPrima
+ExpOrPrima          -> '||' ExpAnd ExpOrPrima
+                     | ε
+
+/* Nivel 2: Lógico AND */
+ExpAnd              -> ExpIgualdad ExpAndPrima
+ExpAndPrima         -> '&&' ExpIgualdad ExpAndPrima
+                     | ε
+
+/* Nivel 3: Comparación (Igualdad) */
+ExpIgualdad         -> ExpRel ExpIgualdadPrima
+ExpIgualdadPrima    -> '==' ExpRel ExpIgualdadPrima
+                     | '!=' ExpRel ExpIgualdadPrima
+                     | ε
+
+/* Nivel 4: Comparación (Relacional) */
+ExpRel              -> ExpAditiva ExpRelPrima
+ExpRelPrima         -> '<'  ExpAditiva ExpRelPrima
+                     | '<=' ExpAditiva ExpRelPrima
+                     | '>'  ExpAditiva ExpRelPrima
+                     | '>=' ExpAditiva ExpRelPrima
+                     | ε
+
+/* Nivel 5: Aritmética Aditiva */
+ExpAditiva          -> ExpMult ExpAditivaPrima
+ExpAditivaPrima     -> '+' ExpMult ExpAditivaPrima
+                     | '-' ExpMult ExpAditivaPrima
+                     | ε
+
+/* Nivel 6: Aritmética Multiplicativa */
+ExpMult             -> ExpUnaria ExpMultPrime
+ExpMultPrime        -> '*' ExpUnaria ExpMultPrime
+                     | '/' ExpUnaria ExpMultPrime
+                     | '%' ExpUnaria ExpMultPrime
+                     | ε
+
+/* Nivel 7: Unarios Prefijos */
+ExpUnaria           -> '!' ExpUnaria
+                     | '-' ExpUnaria
+                     | '++' ExpUnaria
+                     | '--' ExpUnaria
+                     | ExpPostfija
+
+/* Nivel 8: Postfijos (Llamadas, Arrays, Incremento Post) */
+ExpPostfija         -> ExpPrimaria ExpPostfijaPrima
+ExpPostfijaPrima    -> '++' ExpPostfijaPrima
+                     | '--' ExpPostfijaPrima
+                     | '[' Expresion ']' ExpPostfijaPrima
+                     | ε
+
+/* Nivel 9: Primarios y Funciones Reservadas */
+ExpPrimaria         -> 'id' OpcionLlamada
+                     | 'numero'
+                     | 'cadena'
+                     | 'true'
+                     | 'false'
+                     | '(' Expresion ')'
+                     | FuncReservada
+
+OpcionLlamada       -> '(' ListaArgumentos ')' 
+                     | ε
+
+/* 6. ARGUMENTOS Y FUNCIONES RESERVADAS (Tokens Arduino) */
+ListaArgumentos     -> Expresion ListaArgumentosPrima
+                     | ε
+ListaArgumentosPrima-> ',' Expresion ListaArgumentosPrima
+                     | ε
+
+FuncReservada       -> 'token_mover'      '(' ListaArgumentos ')'
+                     | 'token_retroceder' '(' ListaArgumentos ')'
+                     | 'token_girarIzq'   '(' ListaArgumentos ')'
+                     | 'token_girarDer'   '(' ListaArgumentos ')'
+                     | 'token_esperar'    '(' ListaArgumentos ')'
+                     | 'token_leerSensor' '(' ListaArgumentos ')'

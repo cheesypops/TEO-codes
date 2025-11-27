@@ -1,43 +1,56 @@
-/*
- * test_logic.txt
- * Prueba de operadores logicos y booleanos.
- */
+// ROBOT SEGUIDOR DE LINEA (Gramatica Propia)
 
-// 1. Declaraciones Globales
-int g_valor = 10;
-boolean g_interruptor = false;
-float g_limite = 15.5;
+// 1. CONFIGURACION GLOBAL
+int velocidad_base = 200;   // Velocidad para avanzar recto
+int velocidad_giro = 180;   // Velocidad para corregir trayectoria
+int demora = 20;            // Pausa en ms para estabilidad
 
-// 2. Definicion de Setup
-void setup() {
+// 2. FUNCION DE CONTROL DE MOTORES
+// Recibe el estado de los sensores y decide que hacer.
+// 0 = Blanco / Blanco -> Linea centrada -> AVANZAR
+// 1 = Blanco / Negro  -> Linea a la derecha -> GIRAR DERECHA
+// 2 = Negro  / Blanco -> Linea a la izquierda -> GIRAR IZQUIERDA
+// 3 = Negro  / Negro  -> Cruce o Final -> PARAR
+
+void controlar_movimiento(int estado) {
     
-    // Asignacion y logica NOT
-    g_interruptor = !g_interruptor; // Ahora es 'true'
-    
-    // Prueba de IF / ELSE IF / ELSE
-    if (g_valor < 5 || !g_interruptor) {
-        // No deberia entrar aqui
-        mover();
-    } else {
-        // No deberia entrar aqui
-        parar();
+    if (estado == 0) {
+        // Caso: Todo Blanco (Avanzar)
+        token_mover(velocidad_base);
+    } 
+    else {
+        // Bloques anidados para simular else if
+        if (estado == 1) {
+            // Caso: Derecha pisa Negro (Corregir a Derecha)
+            token_girarDer(velocidad_giro);
+        } 
+        else {
+            if (estado == 2) {
+                // Caso: Izquierda pisa Negro (Corregir a Izquierda)
+                token_girarIzq(velocidad_giro);
+            } 
+            else {
+                // Caso: Ambos Negro (Detenerse)
+                token_parar(0);
+            }
+        }
     }
-    
-    // Prueba de WHILE con boolean
-    while (g_interruptor) {
-        g_interruptor = false;
-        girarIzq();
-    }
-    
-    // g_valor deberia ser 100 al final
 }
 
-// 3. Definicion de Funcion
-void mi_funcion(int param1, string param2) {
-    // Declaracion local
-    boolean local_check = true;
-    
-    if (param1 > 10) {
-        local_check = false;
+// 3. FUNCION PRINCIPAL (Entry Point)
+void main() {
+    int lectura = 0;
+
+    // Ciclo infinito de control
+    while (true) {
+        
+        // A. Leer valor de los sensores IR
+        lectura = token_leerSensor();
+
+        // B. Llamar a la logica de decision
+        controlar_movimiento(lectura);
+
+        // C. Pequena espera
+        token_esperar(demora);
     }
 }
