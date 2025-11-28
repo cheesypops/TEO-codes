@@ -1,5 +1,6 @@
 // 1. Declaraciones Globales
 boolean encendido = true;
+int velBase = 170;
 int estado = 0;
 
 // 2. Definicion de Setup

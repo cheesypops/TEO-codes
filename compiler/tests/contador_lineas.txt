@@ -7,43 +7,71 @@ int temp = 0; // Variable temporal para el bucle de espera
 // 2. Definicion de Setup
 void setup() {
     
+    // ============================
+    // FASE 1: AVANZAR Y CONTAR 4
+    // ============================
+    contador = 0;
+    buscando = true;
+    
     while (buscando) {
         
         mover();
         lectura = leerSensor();
         
-        // Si detectamos linea negra (cualquier sensor)...
-        if (lectura != 0) {
+        // Si detectamos linea negra (ambos sensores sobre la línea)
+        if (lectura == 1) {
             
             // 1. Contamos ESTA linea
             contador = contador + 1;
             
-            // 2. TRUCO: "Esperar a que salga de la linea"
-            // Mientras siga leyendo negro (lectura != 0), seguimos avanzando
-            // pero NO volvemos a contar.
-            
-            // Inicializamos con valor negro para entrar al bucle
+            // 2. Esperamos a salir de la línea para no contarla dos veces
             temp = 1; 
-            
-            while (temp != 0) {
-                // Seguimos moviendo el carro para que cruce la linea
+            while (temp == 1) {
                 mover();
-                
-                // Leemos de nuevo. Si ya es blanco (0), temp sera 0
-                // y saldremos de este bucle de espera.
                 temp = leerSensor();
             }
-            
-            // Al llegar aqui, el sensor ya esta en blanco de nuevo.
-            // Estamos listos para buscar la SIGUIENTE linea.
         }
         
-        // Verificar si terminamos
-        if (contador >= 3) {
+        // Verificar si terminamos las 4 líneas hacia adelante
+        if (contador >= 4) {
             buscando = false;
-            reversa(220, 4000);
         }
     }
 
+    parar();
+    reversa(170, 40);
+
+    // ============================
+    // FASE 2: REVERSA Y CONTAR 4
+    // ============================
+    contador = 0;
+    buscando = true;
+
+    while (buscando) {
+        
+        reversa();
+        lectura = leerSensor();
+        
+        // Si detectamos linea negra en reversa
+        if (lectura == 1) {
+            
+            // 1. Contamos ESTA linea
+            contador = contador + 1;
+            
+            // 2. Esperamos a salir de la línea para no contarla dos veces
+            temp = 1;
+            while (temp == 1) {
+                reversa();
+                temp = leerSensor();
+            }
+        }
+        
+        // Verificar si terminamos las 4 líneas en reversa
+        if (contador >= 4) {
+            buscando = false;
+        }
+    }
+
+    // Freno final completo
     parar();
 }

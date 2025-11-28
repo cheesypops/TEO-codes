@@ -1,0 +1,12 @@
+// 1. Declaraciones Globales
+int velCarrito = 230;   // velocidad PWM constante
+boolean encendido = true;
+
+// 2. Definicion de Setup
+void setup() {
+    
+    // Bucle infinito: siempre avanzando a velCarrito
+    while (encendido) {
+        mover(velCarrito);
+    }
+}
